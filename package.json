@@ -1,16 +1,15 @@
 {
-  "private": true,
-  "displayName": "Plugin Name",
-  "name": "homebridge-plugin-name",
+  "displayName": "Homebridge Television Universal Control",
+  "name": "homebridge-television-universal-control",
   "version": "1.0.0",
-  "description": "A short description about what your plugin does.",
+  "description": "Control LIRC and/or Serial devices as a Television device in Homebridge",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/USERNAME/GITHUB_PROJECT_NAME.git"
+    "url": "git://github.com/pkmnct/homebridge-television-universal-control.git"
   },
   "bugs": {
-    "url": "https://github.com/USERNAME/GITHUB_PROJECT_NAME/issues"
+    "url": "https://github.com/pkmnct/homebridge-television-universal-control/issues"
   },
   "engines": {
     "node": ">=10.17.0",
@@ -24,18 +23,29 @@
     "prepublishOnly": "npm run lint && npm run build"
   },
   "keywords": [
-    "homebridge-plugin"
+    "homebridge-plugin",
+    "lirc",
+    "serial",
+    "rs232",
+    "ir",
+    "infared",
+    "television",
+    "receiver",
+    "switcher"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "@types/serialport": "^8.0.0",
+    "serialport": "^8.0.8"
+  },
   "devDependencies": {
-    "@types/node": "^14.0.14",
-    "@typescript-eslint/eslint-plugin": "^3.4.0",
-    "@typescript-eslint/parser": "^3.4.0",
-    "eslint": "^7.3.1",
-    "homebridge": "^1.1.1",
-    "nodemon": "^2.0.4",
+    "@types/node": "^13.13.5",
+    "@typescript-eslint/eslint-plugin": "^2.31.0",
+    "@typescript-eslint/parser": "^2.31.0",
+    "eslint": "^7.0.0",
+    "homebridge": "^1.0.4",
+    "nodemon": "^2.0.3",
     "rimraf": "^3.0.2",
-    "ts-node": "^8.10.2",
-    "typescript": "^3.9.5"
+    "ts-node": "^8.10.1",
+    "typescript": "^3.8.3"
   }
 }

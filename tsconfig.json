@@ -15,7 +15,6 @@
     "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
-    "noImplicitAny": false
   },
   "include": [
     "src/"

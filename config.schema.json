@@ -1,15 +1,1309 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
+  "pluginAlias": "TelevisionUniversalControl",
   "pluginType": "platform",
   "singular": true,
   "schema": {
     "type": "object",
     "properties": {
-      "name": {
-        "title": "Name",
-        "type": "string",
-        "required": true,
-        "default": "Example Dynamic Platform"
+      "devices": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "title": "Television Name",
+              "type": "string",
+              "required": true
+            },
+            "manufacturer": {
+              "type": "string",
+              "placeholder": "Unknown"
+            },
+            "serial": {
+              "type": "string",
+              "placeholder": "Unknown"
+            },
+            "model": {
+              "type": "string",
+              "placeholder": "Unknown"
+            },
+            "interfaces": {
+              "serial": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "title": "Serial Interface Name",
+                      "type": "string",
+                      "placeholder": "USB Serial"
+                    },
+                    "path": {
+                      "title": "Path to Serial Port",
+                      "type": "string",
+                      "placeholder": "/dev/ttyUSB0"
+                    },
+                    "baudRate": {
+                      "title": "Baud Rate",
+                      "type": "number",
+                      "placeholder": "9600"
+                    },
+                    "dataBits": {
+                      "title": "Data Bits",
+                      "type": "integer",
+                      "placeholder": "8",
+                      "oneOf": [
+                        { "title": "8", "enum": [6] },
+                        { "title": "7", "enum": [6] },
+                        { "title": "6", "enum": [6] },
+                        { "title": "5", "enum": [6] }
+                      ]
+                    },
+                    "stopBits": {
+                      "title": "Stop Bits",
+                      "type": "integer",
+                      "placeholder": "1",
+                      "oneOf": [
+                        { "title": "1", "enum": [1] },
+                        { "title": "2", "enum": [2] }
+                      ]
+                    },
+                    "parity": {
+                      "title": "Parity",
+                      "type": "string",
+                      "placeholder": "none",
+                      "oneOf": [
+                        { "title": "none", "enum": ["none"] },
+                        { "title": "even", "enum": ["even"] },
+                        { "title": "mark", "enum": ["mark"] },
+                        { "title": "odd", "enum": ["odd"] },
+                        { "title": "space", "enum": ["space"] }
+                      ]
+                    },
+                    "rtscts": {
+                      "title": "Flow control rtscts",
+                      "type": "boolean",
+                      "placeholder": "false"
+                    },
+                    "xon": {
+                      "title": "Flow control xon",
+                      "type": "boolean",
+                      "placeholder": "false"
+                    },
+                    "xoff": {
+                      "title": "Flow control xoff",
+                      "type": "boolean",
+                      "placeholder": "false"
+                    },
+                    "xany": {
+                      "title": "Flow control xany",
+                      "type": "boolean",
+                      "placeholder": "false"
+                    },
+                    "lock": {
+                      "title": "Prevent other processes from opening the port",
+                      "type": "boolean",
+                      "placeholder": "true"
+                    }
+                  }
+                }                
+              },
+              "lirc": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "title": "Name for LIRC Host",
+                      "type": "string"
+                    },
+                    "host": {
+                      "title": "LIRC Hostname/IP",
+                      "type": "string",
+                      "required": true
+                    },
+                    "port": {
+                      "title": "LIRC Port",
+                      "type": "integer",
+                      "placeholder": 8765
+                    },
+                    "remotes": {
+                      "title": "Remotes",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "remote": {
+                            "title": "LIRC Remote Name",
+                            "type": "string",
+                            "required": true
+                          },
+                          "delay": {
+                            "title": "Delay between IR send commands",
+                            "type": "integer",
+                            "placeholder": 0
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "remoteKeys": {
+              "type": "object",
+              "properties": {
+                "REWIND": {
+                  "type": "object",
+                  "properties": {
+                    "commands": {
+                      "title": "Commands",
+                      "required": true,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "serial": {
+                            "type": "array",
+                            "title": "Serial Commands",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "interface": {
+                                  "type": "string",
+                                  "title": "Serial Interface Name"
+                                },
+                                "command": {
+                                  "type": "string",
+                                  "title": "Command to send to interface"
+                                }
+                              }
+                            }
+                          },
+                          "lirc": {
+                            "type": "array",
+                            "title": "LIRC Commands",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "title": "Name of LIRC Host"
+                                },
+                                "commands": {
+                                  "type": "object",
+                                  "properties": {
+                                    "remote": {
+                                      "type": "string",
+                                      "title": "LIRC Remote name"
+                                    },
+                                    "keys": {
+                                      "type": "array",
+                                      "title": "LIRC Keys to press",
+                                      "items": {
+                                        "type": "string",
+                                        "title": "Key"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "FAST_FORWARD": {
+                  "type": "object",
+                  "properties": {
+                    "commands": {
+                      "title": "Commands",
+                      "required": true,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "serial": {
+                            "type": "array",
+                            "title": "Serial Commands",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "interface": {
+                                  "type": "string",
+                                  "title": "Serial Interface Name"
+                                },
+                                "command": {
+                                  "type": "string",
+                                  "title": "Command to send to interface"
+                                }
+                              }
+                            }
+                          },
+                          "lirc": {
+                            "type": "array",
+                            "title": "LIRC Commands",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "title": "Name of LIRC Host"
+                                },
+                                "commands": {
+                                  "type": "object",
+                                  "properties": {
+                                    "remote": {
+                                      "type": "string",
+                                      "title": "LIRC Remote name"
+                                    },
+                                    "keys": {
+                                      "type": "array",
+                                      "title": "LIRC Keys to press",
+                                      "items": {
+                                        "type": "string",
+                                        "title": "Key"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "NEXT_TRACK": {
+                "type": "object",
+                "properties": {
+                  "commands": {
+                    "title": "Commands",
+                    "required": true,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "serial": {
+                          "type": "array",
+                          "title": "Serial Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "interface": {
+                                "type": "string",
+                                "title": "Serial Interface Name"
+                              },
+                              "command": {
+                                "type": "string",
+                                "title": "Command to send to interface"
+                              }
+                            }
+                          }
+                        },
+                        "lirc": {
+                          "type": "array",
+                          "title": "LIRC Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "title": "Name of LIRC Host"
+                              },
+                              "commands": {
+                                "type": "object",
+                                "properties": {
+                                  "remote": {
+                                    "type": "string",
+                                    "title": "LIRC Remote name"
+                                  },
+                                  "keys": {
+                                    "type": "array",
+                                    "title": "LIRC Keys to press",
+                                    "items": {
+                                      "type": "string",
+                                      "title": "Key"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "PREVIOUS_TRACK": {
+                "type": "object",
+                "properties": {
+                  "commands": {
+                    "title": "Commands",
+                    "required": true,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "serial": {
+                          "type": "array",
+                          "title": "Serial Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "interface": {
+                                "type": "string",
+                                "title": "Serial Interface Name"
+                              },
+                              "command": {
+                                "type": "string",
+                                "title": "Command to send to interface"
+                              }
+                            }
+                          }
+                        },
+                        "lirc": {
+                          "type": "array",
+                          "title": "LIRC Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "title": "Name of LIRC Host"
+                              },
+                              "commands": {
+                                "type": "object",
+                                "properties": {
+                                  "remote": {
+                                    "type": "string",
+                                    "title": "LIRC Remote name"
+                                  },
+                                  "keys": {
+                                    "type": "array",
+                                    "title": "LIRC Keys to press",
+                                    "items": {
+                                      "type": "string",
+                                      "title": "Key"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "ARROW_UP": {
+                "type": "object",
+                "properties": {
+                  "commands": {
+                    "title": "Commands",
+                    "required": true,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "serial": {
+                          "type": "array",
+                          "title": "Serial Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "interface": {
+                                "type": "string",
+                                "title": "Serial Interface Name"
+                              },
+                              "command": {
+                                "type": "string",
+                                "title": "Command to send to interface"
+                              }
+                            }
+                          }
+                        },
+                        "lirc": {
+                          "type": "array",
+                          "title": "LIRC Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "title": "Name of LIRC Host"
+                              },
+                              "commands": {
+                                "type": "object",
+                                "properties": {
+                                  "remote": {
+                                    "type": "string",
+                                    "title": "LIRC Remote name"
+                                  },
+                                  "keys": {
+                                    "type": "array",
+                                    "title": "LIRC Keys to press",
+                                    "items": {
+                                      "type": "string",
+                                      "title": "Key"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "ARROW_DOWN": {
+                "type": "object",
+                "properties": {
+                  "commands": {
+                    "title": "Commands",
+                    "required": true,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "serial": {
+                          "type": "array",
+                          "title": "Serial Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "interface": {
+                                "type": "string",
+                                "title": "Serial Interface Name"
+                              },
+                              "command": {
+                                "type": "string",
+                                "title": "Command to send to interface"
+                              }
+                            }
+                          }
+                        },
+                        "lirc": {
+                          "type": "array",
+                          "title": "LIRC Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "title": "Name of LIRC Host"
+                              },
+                              "commands": {
+                                "type": "object",
+                                "properties": {
+                                  "remote": {
+                                    "type": "string",
+                                    "title": "LIRC Remote name"
+                                  },
+                                  "keys": {
+                                    "type": "array",
+                                    "title": "LIRC Keys to press",
+                                    "items": {
+                                      "type": "string",
+                                      "title": "Key"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "ARROW_LEFT": {
+                "type": "object",
+                "properties": {
+                  "commands": {
+                    "title": "Commands",
+                    "required": true,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "serial": {
+                          "type": "array",
+                          "title": "Serial Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "interface": {
+                                "type": "string",
+                                "title": "Serial Interface Name"
+                              },
+                              "command": {
+                                "type": "string",
+                                "title": "Command to send to interface"
+                              }
+                            }
+                          }
+                        },
+                        "lirc": {
+                          "type": "array",
+                          "title": "LIRC Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "title": "Name of LIRC Host"
+                              },
+                              "commands": {
+                                "type": "object",
+                                "properties": {
+                                  "remote": {
+                                    "type": "string",
+                                    "title": "LIRC Remote name"
+                                  },
+                                  "keys": {
+                                    "type": "array",
+                                    "title": "LIRC Keys to press",
+                                    "items": {
+                                      "type": "string",
+                                      "title": "Key"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "ARROW_RIGHT": {
+                "type": "object",
+                "properties": {
+                  "commands": {
+                    "title": "Commands",
+                    "required": true,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "serial": {
+                          "type": "array",
+                          "title": "Serial Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "interface": {
+                                "type": "string",
+                                "title": "Serial Interface Name"
+                              },
+                              "command": {
+                                "type": "string",
+                                "title": "Command to send to interface"
+                              }
+                            }
+                          }
+                        },
+                        "lirc": {
+                          "type": "array",
+                          "title": "LIRC Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "title": "Name of LIRC Host"
+                              },
+                              "commands": {
+                                "type": "object",
+                                "properties": {
+                                  "remote": {
+                                    "type": "string",
+                                    "title": "LIRC Remote name"
+                                  },
+                                  "keys": {
+                                    "type": "array",
+                                    "title": "LIRC Keys to press",
+                                    "items": {
+                                      "type": "string",
+                                      "title": "Key"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "SELECT": {
+                "type": "object",
+                "properties": {
+                  "commands": {
+                    "title": "Commands",
+                    "required": true,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "serial": {
+                          "type": "array",
+                          "title": "Serial Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "interface": {
+                                "type": "string",
+                                "title": "Serial Interface Name"
+                              },
+                              "command": {
+                                "type": "string",
+                                "title": "Command to send to interface"
+                              }
+                            }
+                          }
+                        },
+                        "lirc": {
+                          "type": "array",
+                          "title": "LIRC Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "title": "Name of LIRC Host"
+                              },
+                              "commands": {
+                                "type": "object",
+                                "properties": {
+                                  "remote": {
+                                    "type": "string",
+                                    "title": "LIRC Remote name"
+                                  },
+                                  "keys": {
+                                    "type": "array",
+                                    "title": "LIRC Keys to press",
+                                    "items": {
+                                      "type": "string",
+                                      "title": "Key"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "BACK": {
+                "type": "object",
+                "properties": {
+                  "commands": {
+                    "title": "Commands",
+                    "required": true,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "serial": {
+                          "type": "array",
+                          "title": "Serial Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "interface": {
+                                "type": "string",
+                                "title": "Serial Interface Name"
+                              },
+                              "command": {
+                                "type": "string",
+                                "title": "Command to send to interface"
+                              }
+                            }
+                          }
+                        },
+                        "lirc": {
+                          "type": "array",
+                          "title": "LIRC Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "title": "Name of LIRC Host"
+                              },
+                              "commands": {
+                                "type": "object",
+                                "properties": {
+                                  "remote": {
+                                    "type": "string",
+                                    "title": "LIRC Remote name"
+                                  },
+                                  "keys": {
+                                    "type": "array",
+                                    "title": "LIRC Keys to press",
+                                    "items": {
+                                      "type": "string",
+                                      "title": "Key"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "EXIT": {
+                "type": "object",
+                "properties": {
+                  "commands": {
+                    "title": "Commands",
+                    "required": true,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "serial": {
+                          "type": "array",
+                          "title": "Serial Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "interface": {
+                                "type": "string",
+                                "title": "Serial Interface Name"
+                              },
+                              "command": {
+                                "type": "string",
+                                "title": "Command to send to interface"
+                              }
+                            }
+                          }
+                        },
+                        "lirc": {
+                          "type": "array",
+                          "title": "LIRC Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "title": "Name of LIRC Host"
+                              },
+                              "commands": {
+                                "type": "object",
+                                "properties": {
+                                  "remote": {
+                                    "type": "string",
+                                    "title": "LIRC Remote name"
+                                  },
+                                  "keys": {
+                                    "type": "array",
+                                    "title": "LIRC Keys to press",
+                                    "items": {
+                                      "type": "string",
+                                      "title": "Key"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "PLAY_PAUSE": {
+                "type": "object",
+                "properties": {
+                  "commands": {
+                    "title": "Commands",
+                    "required": true,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "serial": {
+                          "type": "array",
+                          "title": "Serial Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "interface": {
+                                "type": "string",
+                                "title": "Serial Interface Name"
+                              },
+                              "command": {
+                                "type": "string",
+                                "title": "Command to send to interface"
+                              }
+                            }
+                          }
+                        },
+                        "lirc": {
+                          "type": "array",
+                          "title": "LIRC Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "title": "Name of LIRC Host"
+                              },
+                              "commands": {
+                                "type": "object",
+                                "properties": {
+                                  "remote": {
+                                    "type": "string",
+                                    "title": "LIRC Remote name"
+                                  },
+                                  "keys": {
+                                    "type": "array",
+                                    "title": "LIRC Keys to press",
+                                    "items": {
+                                      "type": "string",
+                                      "title": "Key"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "INFORMATION": {
+                "type": "object",
+                "properties": {
+                  "commands": {
+                    "title": "Commands",
+                    "required": true,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "serial": {
+                          "type": "array",
+                          "title": "Serial Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "interface": {
+                                "type": "string",
+                                "title": "Serial Interface Name"
+                              },
+                              "command": {
+                                "type": "string",
+                                "title": "Command to send to interface"
+                              }
+                            }
+                          }
+                        },
+                        "lirc": {
+                          "type": "array",
+                          "title": "LIRC Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "title": "Name of LIRC Host"
+                              },
+                              "commands": {
+                                "type": "object",
+                                "properties": {
+                                  "remote": {
+                                    "type": "string",
+                                    "title": "LIRC Remote name"
+                                  },
+                                  "keys": {
+                                    "type": "array",
+                                    "title": "LIRC Keys to press",
+                                    "items": {
+                                      "type": "string",
+                                      "title": "Key"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "speaker": {
+              "type": "object",
+              "properties": {
+                "mute_on": {
+                  "type": "object",
+                  "properties": {
+                    "commands": {
+                      "title": "Commands",
+                      "required": true,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "serial": {
+                            "type": "array",
+                            "title": "Serial Commands",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "interface": {
+                                  "type": "string",
+                                  "title": "Serial Interface Name"
+                                },
+                                "command": {
+                                  "type": "string",
+                                  "title": "Command to send to interface"
+                                }
+                              }
+                            }
+                          },
+                          "lirc": {
+                            "type": "array",
+                            "title": "LIRC Commands",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "title": "Name of LIRC Host"
+                                },
+                                "commands": {
+                                  "type": "object",
+                                  "properties": {
+                                    "remote": {
+                                      "type": "string",
+                                      "title": "LIRC Remote name"
+                                    },
+                                    "keys": {
+                                      "type": "array",
+                                      "title": "LIRC Keys to press",
+                                      "items": {
+                                        "type": "string",
+                                        "title": "Key"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "mute_off": {
+                  "type": "object",
+                  "properties": {
+                    "commands": {
+                      "title": "Commands",
+                      "required": true,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "serial": {
+                            "type": "array",
+                            "title": "Serial Commands",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "interface": {
+                                  "type": "string",
+                                  "title": "Serial Interface Name"
+                                },
+                                "command": {
+                                  "type": "string",
+                                  "title": "Command to send to interface"
+                                }
+                              }
+                            }
+                          },
+                          "lirc": {
+                            "type": "array",
+                            "title": "LIRC Commands",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "title": "Name of LIRC Host"
+                                },
+                                "commands": {
+                                  "type": "object",
+                                  "properties": {
+                                    "remote": {
+                                      "type": "string",
+                                      "title": "LIRC Remote name"
+                                    },
+                                    "keys": {
+                                      "type": "array",
+                                      "title": "LIRC Keys to press",
+                                      "items": {
+                                        "type": "string",
+                                        "title": "Key"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "volume_up": {
+                  "type": "object",
+                  "properties": {
+                    "commands": {
+                      "title": "Commands",
+                      "required": true,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "serial": {
+                            "type": "array",
+                            "title": "Serial Commands",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "interface": {
+                                  "type": "string",
+                                  "title": "Serial Interface Name"
+                                },
+                                "command": {
+                                  "type": "string",
+                                  "title": "Command to send to interface"
+                                }
+                              }
+                            }
+                          },
+                          "lirc": {
+                            "type": "array",
+                            "title": "LIRC Commands",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "title": "Name of LIRC Host"
+                                },
+                                "commands": {
+                                  "type": "object",
+                                  "properties": {
+                                    "remote": {
+                                      "type": "string",
+                                      "title": "LIRC Remote name"
+                                    },
+                                    "keys": {
+                                      "type": "array",
+                                      "title": "LIRC Keys to press",
+                                      "items": {
+                                        "type": "string",
+                                        "title": "Key"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "volume_down": {
+                  "type": "object",
+                  "properties": {
+                    "commands": {
+                      "title": "Commands",
+                      "required": true,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "serial": {
+                            "type": "array",
+                            "title": "Serial Commands",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "interface": {
+                                  "type": "string",
+                                  "title": "Serial Interface Name"
+                                },
+                                "command": {
+                                  "type": "string",
+                                  "title": "Command to send to interface"
+                                }
+                              }
+                            }
+                          },
+                          "lirc": {
+                            "type": "array",
+                            "title": "LIRC Commands",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "title": "Name of LIRC Host"
+                                },
+                                "commands": {
+                                  "type": "object",
+                                  "properties": {
+                                    "remote": {
+                                      "type": "string",
+                                      "title": "LIRC Remote name"
+                                    },
+                                    "keys": {
+                                      "type": "array",
+                                      "title": "LIRC Keys to press",
+                                      "items": {
+                                        "type": "string",
+                                        "title": "Key"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "inputs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "title": "Name",
+                    "type": "string",
+                    "required": true
+                  },
+                  "type": {
+                    "title": "Type",
+                    "type": "integer",
+                    "required": true,
+                    "oneOf": [
+                      { "title": "Other", "enum": [0] },
+                      { "title": "Home Screen", "enum": [1] },
+                      { "title": "Tuner", "enum": [2] },
+                      { "title": "HDMI", "enum": [3] },
+                      { "title": "Composite Video", "enum": [4] },
+                      { "title": "S-Video", "enum": [5] },
+                      { "title": "Component Video", "enum": [6] },
+                      { "title": "DVI", "enum": [7] },
+                      { "title": "Airplay", "enum": [8] },
+                      { "title": "USB", "enum": [9] },
+                      { "title": "Application", "enum": [10] }
+                    ]
+                  },
+                  "commands": {
+                    "title": "Commands",
+                    "required": true,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "serial": {
+                          "type": "array",
+                          "title": "Serial Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "interface": {
+                                "type": "string",
+                                "title": "Serial Interface Name"
+                              },
+                              "command": {
+                                "type": "string",
+                                "title": "Command to send to interface"
+                              }
+                            }
+                          }
+                        },
+                        "lirc": {
+                          "type": "array",
+                          "title": "LIRC Commands",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "title": "Name of LIRC Host"
+                              },
+                              "commands": {
+                                "type": "object",
+                                "properties": {
+                                  "remote": {
+                                    "type": "string",
+                                    "title": "LIRC Remote name"
+                                  },
+                                  "keys": {
+                                    "type": "array",
+                                    "title": "LIRC Keys to press",
+                                    "items": {
+                                      "type": "string",
+                                      "title": "Key"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
