@@ -38,74 +38,81 @@
                       "name": {
                         "title": "Serial Interface Name",
                         "type": "string",
-                        "placeholder": "USB Serial"
+                        "placeholder": "USB Serial",
+                        "required": true
                       },
                       "path": {
                         "title": "Path to Serial Port",
                         "type": "string",
                         "placeholder": "/dev/ttyUSB0"
                       },
-                      "baudRate": {
-                        "title": "Baud Rate",
-                        "type": "number",
-                        "placeholder": "9600"
-                      },
-                      "dataBits": {
-                        "title": "Data Bits",
-                        "type": "integer",
-                        "placeholder": "8",
-                        "oneOf": [
-                          { "title": "8", "enum": [8] },
-                          { "title": "7", "enum": [7] },
-                          { "title": "6", "enum": [6] },
-                          { "title": "5", "enum": [5] }
-                        ]
-                      },
-                      "stopBits": {
-                        "title": "Stop Bits",
-                        "type": "integer",
-                        "placeholder": "1",
-                        "oneOf": [
-                          { "title": "1", "enum": [1] },
-                          { "title": "2", "enum": [2] }
-                        ]
-                      },
-                      "parity": {
-                        "title": "Parity",
-                        "type": "string",
-                        "placeholder": "none",
-                        "oneOf": [
-                          { "title": "none", "enum": ["none"] },
-                          { "title": "even", "enum": ["even"] },
-                          { "title": "mark", "enum": ["mark"] },
-                          { "title": "odd", "enum": ["odd"] },
-                          { "title": "space", "enum": ["space"] }
-                        ]
-                      },
-                      "rtscts": {
-                        "title": "Flow control rtscts",
-                        "type": "boolean",
-                        "default": false
-                      },
-                      "xon": {
-                        "title": "Flow control xon",
-                        "type": "boolean",
-                        "default": false
-                      },
-                      "xoff": {
-                        "title": "Flow control xoff",
-                        "type": "boolean",
-                        "default": false
-                      },
-                      "xany": {
-                        "title": "Flow control xany",
-                        "type": "boolean",
-                        "default": false
-                      },
-                      "lock": {
-                        "title": "Prevent other processes from opening the port",
-                        "type": "boolean",
-                        "default": true
+                      "options": {
+                        "title": "Options for serial port",
+                        "type": "object",
+                        "properties": {
+                          "baudRate": {
+                            "title": "Baud Rate",
+                            "type": "number",
+                            "placeholder": "9600"
+                          },
+                          "dataBits": {
+                            "title": "Data Bits",
+                            "type": "integer",
+                            "placeholder": "8",
+                            "oneOf": [
+                              { "title": "8", "enum": [8] },
+                              { "title": "7", "enum": [7] },
+                              { "title": "6", "enum": [6] },
+                              { "title": "5", "enum": [5] }
+                            ]
+                          },
+                          "stopBits": {
+                            "title": "Stop Bits",
+                            "type": "integer",
+                            "placeholder": "1",
+                            "oneOf": [
+                              { "title": "1", "enum": [1] },
+                              { "title": "2", "enum": [2] }
+                            ]
+                          },
+                          "parity": {
+                            "title": "Parity",
+                            "type": "string",
+                            "placeholder": "none",
+                            "oneOf": [
+                              { "title": "none", "enum": ["none"] },
+                              { "title": "even", "enum": ["even"] },
+                              { "title": "mark", "enum": ["mark"] },
+                              { "title": "odd", "enum": ["odd"] },
+                              { "title": "space", "enum": ["space"] }
+                            ]
+                          },
+                          "rtscts": {
+                            "title": "Flow control rtscts",
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "xon": {
+                            "title": "Flow control xon",
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "xoff": {
+                            "title": "Flow control xoff",
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "xany": {
+                            "title": "Flow control xany",
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "lock": {
+                            "title": "Prevent other processes from opening the port",
+                            "type": "boolean",
+                            "default": true
+                          }
+                        }
                       }
                     }
                   }
@@ -116,13 +123,14 @@
                     "type": "object",
                     "properties": {
                       "name": {
-                        "title": "Name for LIRC Host",
-                        "type": "string"
+                        "title": "Name for this LIRC configuration",
+                        "type": "string",
+                        "required": true
                       },
                       "host": {
                         "title": "LIRC Hostname/IP",
                         "type": "string",
-                        "required": true
+                        "placeholder": "localhost"
                       },
                       "port": {
                         "title": "LIRC Port",
@@ -165,14 +173,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -186,14 +197,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -222,14 +236,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -243,14 +260,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -279,14 +299,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -300,14 +323,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -336,14 +362,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -357,14 +386,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -393,14 +425,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -414,14 +449,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -450,14 +488,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -471,14 +512,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -507,14 +551,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -528,14 +575,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -564,14 +614,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -585,14 +638,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -621,14 +677,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -642,14 +701,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -678,14 +740,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -699,14 +764,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -735,14 +803,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -756,14 +827,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -792,14 +866,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -813,14 +890,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -849,14 +929,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -870,14 +953,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -911,14 +997,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -932,14 +1021,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -968,14 +1060,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -989,14 +1084,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -1018,6 +1116,10 @@
                     "serial": {
                       "type": "object",
                       "properties": {
+                        "interface": {
+                          "type": "string",
+                          "title": "Serial Interface Name"
+                        },
                         "command": {
                           "type": "string",
                           "title": "Command to send"
@@ -1040,6 +1142,10 @@
                     "serial": {
                       "type": "object",
                       "properties": {
+                        "interface": {
+                          "type": "string",
+                          "title": "Serial Interface Name"
+                        },
                         "command": {
                           "type": "string",
                           "title": "Command to send"
@@ -1053,8 +1159,11 @@
                                 "type": "string"
                               },
                               "input": {
-                                "type": "integer",
-                                "title": "the index number of the input as defined in the config"
+                                "title": "The index(es) of the input array that this input could be",
+                                "type": "array",
+                                "items": {
+                                  "type": "integer"
+                                }
                               }
                             }
                           }
@@ -1069,6 +1178,10 @@
                     "serial": {
                       "type": "object",
                       "properties": {
+                        "interface": {
+                          "type": "string",
+                          "title": "Serial Interface Name"
+                        },
                         "command": {
                           "type": "string",
                           "title": "Command to send"
@@ -1108,14 +1221,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -1129,14 +1245,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -1165,14 +1284,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -1186,14 +1308,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -1222,14 +1347,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -1243,14 +1371,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -1279,14 +1410,17 @@
                               "properties": {
                                 "interface": {
                                   "type": "string",
-                                  "title": "Serial Interface Name"
+                                  "title": "Serial Interface Name",
+                                  "required": true
                                 },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command"
+                                    "title": "Command",
+                                    "required": true
                                   }
                                 }
                               }
@@ -1300,14 +1434,17 @@
                               "properties": {
                                 "name": {
                                   "type": "string",
-                                  "title": "Name of LIRC Host"
+                                  "title": "Name of LIRC Host",
+                                  "required": true
                                 },
                                 "keys": {
                                   "type": "array",
                                   "title": "LIRC Keys to press",
+                                  "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Key"
+                                    "title": "Key",
+                                    "required": true
                                   }
                                 }
                               }
@@ -1363,14 +1500,17 @@
                             "properties": {
                               "interface": {
                                 "type": "string",
-                                "title": "Serial Interface Name"
+                                "title": "Serial Interface Name",
+                                "required": true
                               },
                               "commands": {
                                 "type": "array",
                                 "title": "Commands to send to interface",
+                                "required": true,
                                 "items": {
                                   "type": "string",
-                                  "title": "Command"
+                                  "title": "Command",
+                                  "required": true
                                 }
                               }
                             }
@@ -1384,14 +1524,17 @@
                             "properties": {
                               "name": {
                                 "type": "string",
-                                "title": "Name of LIRC Host"
+                                "title": "Name of LIRC Host",
+                                "required": true
                               },
                               "keys": {
                                 "type": "array",
                                 "title": "LIRC Keys to press",
+                                "required": true,
                                 "items": {
                                   "type": "string",
-                                  "title": "Key"
+                                  "title": "Key",
+                                  "required": true
                                 }
                               }
                             }

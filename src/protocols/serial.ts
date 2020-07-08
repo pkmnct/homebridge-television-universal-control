@@ -14,21 +14,25 @@ export class SerialProtocol {
 
     constructor(
         private readonly path: string,
+        private readonly options: {
+          baudRate?: number;
+          dataBits?: 8 | 7 | 6 | 5;
+          stopBits?: 1 | 2;
+          parity?: 'none' | 'even' | 'mark' | 'odd' | 'space';
+          rtscts?: boolean;
+          xon?: boolean;
+          xoff?: boolean;
+          xany?: boolean;
+          lock?: boolean;
+        } | undefined,
         private readonly logger: { info: Function; error: Function; debug: Function },
     ) {
-
       // Initialize Serial Port
-      this.port = new SerialPort(path, {
-        baudRate: 9600,
-        dataBits: 8,
-        parity: 'none',
-        stopBits: 1,
-        rtscts: false,
-      }, (error: Error | null | undefined) => {
+      this.port = new SerialPort(path, options, (error: Error | null | undefined) => {
         if (error) {
           logger.error(error.message);
         } else {
-          logger.debug(`[Serial] Initialized serial port at ${this.path}`);
+          logger.debug(`[Serial] Initialized serial port at ${this.path} with options ${JSON.stringify(options)}`);
         }
       });
 
@@ -88,7 +92,7 @@ export class SerialProtocol {
           this.timeout && clearTimeout(this.timeout);
           this.timeout = setTimeout(() => {
             if (this.busy && this.current) {
-              this.current.callback(new Error(`${this.current.command.trim()} timed out after 30ms. Skipping`));
+              this.current.callback(new Error(`${this.current.command.trim()} timed out after 500ms. Skipping`));
               this.busy = false;
               this.processQueue();
             }
