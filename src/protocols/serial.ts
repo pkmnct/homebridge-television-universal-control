@@ -34,6 +34,7 @@ export class SerialProtocol {
         private readonly path: string,
         private readonly options: SerialProtocolOptions | undefined,
         private readonly logger: Logger,
+        private readonly responseTimeout: number,
     ) {
       // Initialize Serial Port
       this.port = new SerialPort(path, options, (error) => {
@@ -63,7 +64,7 @@ export class SerialProtocol {
           return;
         }
 
-        logger.debug(`[Serial] Got Data ${data}, sending to: ${JSON.stringify(this.current)}`);
+        logger.debug(`[Serial] Got Data ${data.trim()}, sending to: ${JSON.stringify(this.current)}`);
         this.current.callback(data);
         this.current = null;
         this.processQueue();
@@ -96,15 +97,15 @@ export class SerialProtocol {
           logger.info(`Sending command to ${this.path}: ${next.command.trim()}`);
           this.port.write(next.command);
 
-          // If after 500ms a command still hasn't processed, skip it and go to the next.
+          // If after timeout has elapsed a command still hasn't processed, skip it and go to the next.
           this.timeout && clearTimeout(this.timeout);
           this.timeout = setTimeout(() => {
             if (this.busy && this.current) {
-              this.current.callback(new Error(`${this.current.command.trim()} timed out after 500ms. Skipping`));
+              this.current.callback(new Error(`${this.current.command.trim()} timed out after ${responseTimeout}ms. Skipping`));
               this.busy = false;
               this.processQueue();
             }
-          }, 500);
+          }, responseTimeout);
         }
       };
     }    

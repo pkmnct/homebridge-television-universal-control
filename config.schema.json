@@ -46,6 +46,11 @@
                         "type": "string",
                         "placeholder": "/dev/ttyUSB0"
                       },
+                      "requestTimeout": {
+                        "title": "Timeout for serial commands (in ms)",
+                        "type": "number",
+                        "placeholder": "30"
+                      },
                       "options": {
                         "title": "Options for serial port",
                         "type": "object",
@@ -113,6 +118,54 @@
                             "default": true
                           }
                         }
+                      },
+                      "getStatus": {
+                        "type": "object",
+                        "properties": {
+                          "power": {
+                            "type": "object",
+                            "properties": {
+                              "command": {
+                                "type": "string",
+                                "title": "Command to send"
+                              },
+                              "onResponse": {
+                                "type": "string",
+                                "title": "Expected response for on"
+                              },
+                              "offResponse": {
+                                "type": "string",
+                                "title": "Expected response for off"
+                              }
+                            }
+                          },
+                          "input": {
+                            "type": "object",
+                            "properties": {
+                              "command": {
+                                "type": "string",
+                                "title": "Command to send"
+                              }
+                            }
+                          },
+                          "mute": {
+                            "type": "object",
+                            "properties": {
+                              "command": {
+                                "type": "string",
+                                "title": "Command to send"
+                              },
+                              "onResponse": {
+                                "type": "string",
+                                "title": "Expected response for on"
+                              },
+                              "offResponse": {
+                                "type": "string",
+                                "title": "Expected response for off"
+                              }
+                            }
+                          }
+                        }
                       }
                     }
                   }
@@ -153,6 +206,7 @@
               }
             },
             "remoteKeys": {
+              "title": "Remote Keys",
               "type": "object",
               "properties": {
                 "REWIND": {
@@ -160,7 +214,6 @@
                   "properties": {
                     "commands": {
                       "title": "Commands",
-                      "required": true,
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -869,6 +922,10 @@
                                   "title": "Serial Interface Name",
                                   "required": true
                                 },
+                                "getStatusResponse": {
+                                  "type": "string",
+                                  "title": "Serial Command Get Input Response for this input"
+                                },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
@@ -931,6 +988,10 @@
                                   "type": "string",
                                   "title": "Serial Interface Name",
                                   "required": true
+                                },
+                                "getStatusResponse": {
+                                  "type": "string",
+                                  "title": "Serial Command Get Input Response for this input"
                                 },
                                 "commands": {
                                   "type": "array",
@@ -1100,99 +1161,6 @@
                               }
                             }
                           }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "getStatus": {
-              "type": "object",
-              "properties": {
-                "power": {
-                  "type": "object",
-                  "properties": {
-                    "serial": {
-                      "type": "object",
-                      "properties": {
-                        "interface": {
-                          "type": "string",
-                          "title": "Serial Interface Name"
-                        },
-                        "command": {
-                          "type": "string",
-                          "title": "Command to send"
-                        },
-                        "onResponse": {
-                          "type": "string",
-                          "title": "Expected response for on"
-                        },
-                        "offResponse": {
-                          "type": "string",
-                          "title": "Expected response for off"
-                        }
-                      }
-                    }
-                  }
-                },
-                "input": {
-                  "type": "object",
-                  "properties": {
-                    "serial": {
-                      "type": "object",
-                      "properties": {
-                        "interface": {
-                          "type": "string",
-                          "title": "Serial Interface Name"
-                        },
-                        "command": {
-                          "type": "string",
-                          "title": "Command to send"
-                        },
-                        "responses": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "response": {
-                                "type": "string"
-                              },
-                              "input": {
-                                "title": "The index(es) of the input array that this input could be",
-                                "type": "array",
-                                "items": {
-                                  "type": "integer"
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "mute": {
-                  "type": "object",
-                  "properties": {
-                    "serial": {
-                      "type": "object",
-                      "properties": {
-                        "interface": {
-                          "type": "string",
-                          "title": "Serial Interface Name"
-                        },
-                        "command": {
-                          "type": "string",
-                          "title": "Command to send"
-                        },
-                        "onResponse": {
-                          "type": "string",
-                          "title": "Expected response for on"
-                        },
-                        "offResponse": {
-                          "type": "string",
-                          "title": "Expected response for off"
                         }
                       }
                     }
@@ -1484,6 +1452,19 @@
                       { "title": "USB", "enum": [9] },
                       { "title": "Application", "enum": [10] }
                     ]
+                  },
+                  "getStatus": {
+                    "type": "object",
+                    "properties": {
+                      "interface": {
+                        "type": "string",
+                        "title": "Serial Interface Name"
+                      },
+                      "response": {
+                        "type": "string",
+                        "title": "Serial Command Get Input Response for this input"
+                      }
+                    }
                   },
                   "commands": {
                     "title": "Commands",
