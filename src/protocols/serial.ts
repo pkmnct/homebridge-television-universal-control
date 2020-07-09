@@ -1,34 +1,42 @@
 import SerialPort from 'serialport';
+import { Logger } from 'homebridge/lib/logger';
+
+export interface SerialProtocolOptions {
+  baudRate?: number;
+  dataBits?: 8 | 7 | 6 | 5;
+  stopBits?: 1 | 2;
+  parity?: 'none' | 'even' | 'mark' | 'odd' | 'space';
+  rtscts?: boolean;
+  xon?: boolean;
+  xoff?: boolean;
+  xany?: boolean;
+  lock?: boolean;
+}
+
+export interface SerialProtocolCommand {
+  command: string;
+  callback: (data: string | Error) => void;
+}
 
 export class SerialProtocol {
     private readonly port: SerialPort;
     private readonly parser: SerialPort.parsers.Readline;
 
-    private readonly queue: { command: string; callback: Function}[];
+    private readonly queue:  SerialProtocolCommand[];
     private busy: boolean;
-    private current: { command: string; callback: Function} | null;
+    private current: SerialProtocolCommand | null;
     private timeout: ReturnType<typeof setTimeout> | null;
 
-    public send: (command: string, callback: Function) => void;
+    public send: (command: SerialProtocolCommand['command'], callback: SerialProtocolCommand['callback']) => void;
     private processQueue: () => void;
 
     constructor(
         private readonly path: string,
-        private readonly options: {
-          baudRate?: number;
-          dataBits?: 8 | 7 | 6 | 5;
-          stopBits?: 1 | 2;
-          parity?: 'none' | 'even' | 'mark' | 'odd' | 'space';
-          rtscts?: boolean;
-          xon?: boolean;
-          xoff?: boolean;
-          xany?: boolean;
-          lock?: boolean;
-        } | undefined,
-        private readonly logger: { info: Function; error: Function; debug: Function },
+        private readonly options: SerialProtocolOptions | undefined,
+        private readonly logger: Logger,
     ) {
       // Initialize Serial Port
-      this.port = new SerialPort(path, options, (error: Error | null | undefined) => {
+      this.port = new SerialPort(path, options, (error) => {
         if (error) {
           logger.error(error.message);
         } else {
@@ -61,7 +69,7 @@ export class SerialProtocol {
         this.processQueue();
       });
 
-      this.send = (command: string, callback: Function): void => {
+      this.send = (command: SerialProtocolCommand['command'], callback: SerialProtocolCommand['callback']): void => {
         logger.debug(`[Serial] Pushing command ${command.trim()} on to queue.`);
         // Push the command on the queue
         this.queue.push({command, callback});
