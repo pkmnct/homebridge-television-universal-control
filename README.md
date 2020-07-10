@@ -3,6 +3,9 @@
 
 This Homebridge plugin enables control of one or more compatible devices using one "Television" in HomeKit.
 
+## Setup
+If you run into permission errors during the install, run `sudo npm i -g homebridge-television-universal-control --unsafe-perm`
+
 ## Configuration
 
 It is recommended that you use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) for GUI configuration. You can also view the [configuration schema](config.schema.json).
