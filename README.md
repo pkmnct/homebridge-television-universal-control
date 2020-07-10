@@ -1,18 +1,25 @@
 # Homebridge Television Universal Control
 
-This Homebridge plugin enables control of most serial/RS232 and LIRC compatible devices using one Television.
+This Homebridge plugin enables control of one or more compatible devices using one "Television" in HomeKit.
 
-# Use Case
+## Configuration
 
-Your devices must support control via either serial or IR (LIRC). I may work on including more protocols in the future.
-If you use an amplifier, a television, external speakers, or other devices that support IR and serial control, this will allow you to control them using one combined Television in Homebridge.
+It is recommended that you use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) for GUI configuration. You can also view the [configuration schema](config.schema.json).
 
-For example, control volume and switch inputs through your AV receiver while seamlessly switching between TV inputs as well. You can also power on and off your entire system with one Television control.
+First, set the name of your television group. Then, define your devices. For each physical device you want to control in the group, add a configuration under the relevant protocol. See the protocols section below.
 
-# Configuration
+Now, you will want to define the commands to run for setting power, speaker (volume/mute), and remoteKeys. Each individual command endpoint will take an array of command objects to run for each supported protocol. Each command object must contain the name of the interface you want to use and the command to send to that interface.
 
-It is recommended that you use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) for GUI configuration. You can also view the [configuration schema](config.schema.json)
+Finally, you can define your inputs. Each input will allow you to specify commands in a similar format as the other command endpoints. You can also specify any query responses expected from supported protocols. The first input defined will be what the TV initializes to if the state can't be determined by querying a supported protocol.
 
-# Future Work
+## Protocols
 
-I plan to expand this out to be able to control more devices via different protocols, and perhaps present devices using different Homebridge services. I'm open to feedback so please open an issue or pull request if you want additional functionality!
+The plugin supports multiple protocols, and may have more added in the future. Pull requests are welcome!
+
+### Serial
+
+Each serial device must have a unique name. The name will be used when describing the commands to run for each endpoint. You can specify options for how to initiate the connection. Since serial is bidirectional, you can also specify options on how to get information from this device, such as power, mute, or input status.
+
+### LIRC
+
+Each LIRC device must have a unique name. The name will be used when describing the commands to run for each endpoint. You must set up and run LIRC on a host with an IR transmitter. You can specify the host, remote name, and delay to use in the configuration.
