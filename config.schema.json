@@ -235,7 +235,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -298,7 +298,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -361,7 +361,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -424,7 +424,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -487,7 +487,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -550,7 +550,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -613,7 +613,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -676,7 +676,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -739,7 +739,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -802,7 +802,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -865,7 +865,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -922,17 +922,13 @@
                                   "title": "Serial Interface Name",
                                   "required": true
                                 },
-                                "getStatusResponse": {
-                                  "type": "string",
-                                  "title": "Serial Command Get Input Response for this input"
-                                },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -989,17 +985,13 @@
                                   "title": "Serial Interface Name",
                                   "required": true
                                 },
-                                "getStatusResponse": {
-                                  "type": "string",
-                                  "title": "Serial Command Get Input Response for this input"
-                                },
                                 "commands": {
                                   "type": "array",
                                   "title": "Commands to send to interface",
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -1067,7 +1059,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -1130,7 +1122,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -1198,7 +1190,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -1261,7 +1253,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -1324,7 +1316,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -1387,7 +1379,7 @@
                                   "required": true,
                                   "items": {
                                     "type": "string",
-                                    "title": "Command",
+                                    "title": "Command to send to interface",
                                     "required": true
                                   }
                                 }
@@ -1456,13 +1448,21 @@
                   "getStatus": {
                     "type": "object",
                     "properties": {
-                      "interface": {
-                        "type": "string",
-                        "title": "Serial Interface Name"
-                      },
-                      "response": {
-                        "type": "string",
-                        "title": "Serial Command Get Input Response for this input"
+                      "serial": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "interface": {
+                              "type": "string",
+                              "title": "Serial Interface Name"
+                            },
+                            "response": {
+                              "type": "string",
+                              "title": "Serial Command Get Input Response for this input"
+                            }
+                          }
+                        }
                       }
                     }
                   },

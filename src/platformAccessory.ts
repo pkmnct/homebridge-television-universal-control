@@ -95,6 +95,9 @@ export class Television {
     input: number;
   }
 
+  private configuredKeyStrings: string[];
+  private configuredKeys: number[];
+
   constructor(
     private readonly platform: TelevisionUniversalControl,
     private readonly accessory: PlatformAccessory,
@@ -177,37 +180,17 @@ export class Television {
     // Link the service
     this.tvService.addLinkedService(this.tvSpeakerService);
 
-    // register handlers for the remote control
-    // TODO: Remote Keys not quite working yet.
-    if (accessory.context.device.remoteKeys) {
-      const configuredKeyStrings = Object.keys(accessory.context.device.remoteKeys);
-      const configuredKeys: number[] = [];
-      configuredKeyStrings.forEach(string => {
-        // TODO: there is probably a better way to get this via typescript...
-        configuredKeys.push((RemoteKey as unknown as { [key: string]: number })[string]);
-      });
+    this.tvService
+      .getCharacteristic(this.platform.Characteristic.RemoteKey)
+      .on(CharacteristicEventTypes.SET, this.setRemoteKey.bind(this));
 
-      this.tvService
-        .getCharacteristic(this.platform.Characteristic.RemoteKey)
-        .on(
-          CharacteristicEventTypes.SET,
-          (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-            if (value in configuredKeys) {
-              this.sendCommands(accessory.context.device.remoteKeys[
-                configuredKeyStrings[configuredKeys.indexOf(value as number)]
-              ].commands, () => {
-                // Do nothing in callback for now
-              });
-              callback(null);
-            } else {
-              callback(
-                new Error(`This RemoteKey has not been configured: ${value}`),
-              );
-            }
-          },
-        );
-    }
-
+    // Initialize the configured keys
+    this.configuredKeyStrings = Object.keys(accessory.context.device.remoteKeys);
+    this.configuredKeys = [];
+    this.configuredKeyStrings.forEach(string => {
+      // TODO: there is probably a cleaner way to get this via typescript...
+      this.configuredKeys.push((RemoteKey as unknown as { [key: string]: number })[string]);
+    });
 
     // register inputs
     accessory.context.device.inputs && accessory.context.device.inputs.forEach(
@@ -260,9 +243,10 @@ export class Television {
     this.accessory.context.device.interfaces.lirc.forEach((lircInterface: {
       name: string;
       host: string;
-      port: number;
+      port?: number;
       remote: string;
-      delay: number;
+      delay?: number;
+      timeout?: number;
     }) => {
       this.protocols.lirc[lircInterface.name] = new LircProtocol(
         lircInterface.host,
@@ -270,10 +254,29 @@ export class Television {
         lircInterface.remote,
         lircInterface.delay || 0,
         platform.log,
+        lircInterface.timeout || 500,
       );
     });
 
   }
+
+  /**
+   * Handle "SET" requests from HomeKit
+   * These are sent when the user activates a RemoteKey
+   */
+  setRemoteKey = (value: CharacteristicValue, callback: CharacteristicSetCallback): void => {
+    if (value in this.configuredKeys) {
+      this.sendCommands(this.accessory.context.device.remoteKeys[
+        this.configuredKeyStrings[this.configuredKeys.indexOf(value as number)]
+      ].commands, response => {
+        this.handleResponse(response, callback);
+      });
+    } else {
+      callback(
+        new Error(`This RemoteKey has not been configured: ${value}`),
+      );
+    }
+  };
 
 
   /**
@@ -286,21 +289,16 @@ export class Television {
     const commands = value ? this.accessory.context.device.power.on.commands : this.accessory.context.device.power.off.commands;
 
     if (value !== this.states.power) {
-      this.sendCommands(commands, response => {
-        this.platform.log.debug(JSON.stringify(response));
-      });
+      this.sendCommands(commands, response => this.handleResponse(response, callback));
       this.states.power = value as boolean;
     }
-
-    // the first argument of the callback should be null if there are no errors
-    callback(null);
   }
 
   /**
    * Handle the "GET" requests from HomeKit
    * These are sent when HomeKit wants to know the current state of the accessory, for example, checking if a Light bulb is on.
    * 
-   * GET requests should return as fast as possbile. A long delay here will result in
+   * GET requests should return as fast as possible. A long delay here will result in
    * HomeKit being unresponsive and a bad user experience in general.
    * 
    * If your device takes time to respond you should update the status of your device
@@ -310,7 +308,7 @@ export class Television {
    * this.tvService.updateCharacteristic(this.platform.Characteristic.On, true)
    */
   getActive(callback: CharacteristicGetCallback): void {
-    this.platform.log.debug('Getting power state from TV');
+    this.platform.log.debug('Getting power state');
 
     // Find the interfaces to query
     const interfacesToQuery: SerialProtocolInterface[] = this.accessory.context.device.interfaces.serial.filter(
@@ -318,13 +316,14 @@ export class Television {
     );
 
     if (interfacesToQuery) {
-      // If any individual device is off, this will be overridden and the universal TV will show off.
+      // If any individual device (that has getStatus power configured) is off, this will be overridden and the universal TV will show off.
       let isOn = true;
       let counter = interfacesToQuery.length;
 
       const done = (): void => {
         counter--;
         if (counter === 0) {
+          this.states.power = isOn;
           callback(null, isOn);
         }
       };
@@ -364,15 +363,10 @@ export class Television {
     value: CharacteristicValue,
     callback: CharacteristicSetCallback,
   ): void {
-
     this.sendCommands(this.accessory.context.device.inputs[value as number].commands, response => {
-      this.platform.log.debug(JSON.stringify(response));
+      this.states.input = value as number;
+      this.handleResponse(response, callback);
     });
-
-    // the first argument of the callback should be null if there are no errors
-    this.states.input = value as number;
-    callback(null);
-
   }
 
   /**
@@ -392,7 +386,7 @@ export class Television {
     // We need to keep track to make sure we've heard responses from each devices
     let counter = interfacesToQuery.length;
 
-    // Store the repsonses from each device to be able to determine the input
+    // Store the responses from each device to be able to determine the input
     const currentInput: {
       [key: string]: string;
     } = {};
@@ -402,33 +396,45 @@ export class Television {
 
       // When all device responses are triggered
       if (counter === 0) {
-        const possibleInputs: {
-          input: number;
-          priority: number;
-        }[] = [];
+        const possibleInputs: number[] = [];
         this.accessory.context.device.inputs.forEach((input: Input, i: number) => {
+          // If this input has getStatus for serial
           if (input.getStatus && input.getStatus.serial) {
             let isValid = true;
             input.getStatus.serial.forEach((serialInputStatus) => {
+              // If 
               if (!((currentInput[serialInputStatus.interface]).includes(serialInputStatus.response))) {
                 isValid = false;
               }
             });
             if (isValid) {
-              possibleInputs.push({
-                input: i,
-                priority: input.getStatus.serial.length,
-              });
+              possibleInputs.push(i);
             }
           }
         });
 
-        // const likelyInput = possibleInputs.sort((a, b) => b.priority - a.priority)[0];
-        this.platform.log.debug(`Possible inputs: ${JSON.stringify(possibleInputs)}`);
-        if (possibleInputs.length > 1) {
-          callback(null, this.states.input);
+        if (possibleInputs.length) {
+          if (possibleInputs.length > 1) {
+            this.platform.log.debug(`Possible inputs: ${possibleInputs.join(', ')}`);
+            // The input is ambiguous, check if the current state is a possibility
+            if (this.states.input in possibleInputs) {
+              this.platform.log.debug('Current input is a possible input, not changing');
+              // The current state is valid, using it
+              callback(null, this.states.input);
+            } else {
+              this.platform.log.debug('Current input is not a valid input and input is ambiguous, using first possible input');
+              // The current state is not valid, using first item in array
+              this.states.input = possibleInputs[0];
+              callback(null, possibleInputs[0]);
+            }
+          } else {
+            // Only one valid input, use it
+            this.states.input = possibleInputs[0];
+            callback(null, possibleInputs[0]);
+          }
         } else {
-          callback(null, possibleInputs[0]);
+          // Could not determine input, falling back to internal state
+          callback(null, this.states.input);
         }
       }
     };
@@ -452,14 +458,15 @@ export class Television {
     );
 
     if (interfacesToQuery) {
-    // If any individual device is unmuted, this will be overridden and the universal TV will show unmuted.
-      let isOn = true;
+      // If any individual device is muted, this will be overridden and the universal TV will show muted.
+      let muted = false;
       let counter = interfacesToQuery.length;
 
       const done = (): void => {
         counter--;
         if (counter === 0) {
-          callback(null, isOn);
+          this.states.mute = muted;
+          callback(null, muted);
         }
       };
 
@@ -467,19 +474,17 @@ export class Television {
         this.protocols.serial[serialInterface.name].send(serialInterface.getStatus!.mute!.command, data => {
           if (data instanceof Error) {
             this.platform.log.error(data.toString());
-            isOn = false;
             done();
           } else if (
             data.includes(serialInterface.getStatus!.mute!.onResponse) ||
-          data.includes(serialInterface.getStatus!.mute!.offResponse)
+            data.includes(serialInterface.getStatus!.mute!.offResponse)
           ) {
             this.platform.log.debug(`${serialInterface.getStatus!.mute!.command.trim()} received success: (${data})`);
-            isOn = data.includes(serialInterface.getStatus!.mute!.onResponse) ? true : false;
+            muted = data.includes(serialInterface.getStatus!.mute!.onResponse) ? true : false;
             done();
           } else {
             const errorMessage = `While attempting to get mute state, the serial command returned '${data}'`;
             this.platform.log.error(errorMessage);
-            isOn = false;
             done();
           }
         });
@@ -499,19 +504,14 @@ export class Television {
     value: CharacteristicValue,
     callback: CharacteristicSetCallback,
   ): void {
-
     const commands = value ?
       this.accessory.context.device.speaker.mute_on.commands :
       this.accessory.context.device.speaker.mute_off.commands;
 
     this.sendCommands(commands, response => {
-      this.platform.log.debug(JSON.stringify(response));
+      this.states.mute = value as boolean;
+      this.handleResponse(response, callback);
     });
-
-    this.states.mute = value as boolean;
-    // the first argument of the callback should be null if there are no errors
-    callback(null);
-
   }
 
   /**
@@ -522,16 +522,29 @@ export class Television {
     value: CharacteristicValue,
     callback: CharacteristicSetCallback,
   ): void {
-
     const commands = value === this.platform.Characteristic.VolumeSelector.DECREMENT ?
       this.accessory.context.device.speaker.volume_down.commands :
       this.accessory.context.device.speaker.volume_up.commands;
 
-    this.sendCommands(commands, response => {
-      this.platform.log.debug(JSON.stringify(response));
-    });
+    this.sendCommands(commands, response => this.handleResponse(response, callback));
+  }
 
-    // the first argument of the callback should be null if there are no errors
+  handleResponse = (
+    response: CommandResponse,
+    callback: CharacteristicSetCallback,
+  ): void => {
+    const errors: string[] = [];
+    [...response.serial, ...response.lirc].forEach(response => {
+      if (response.response instanceof Error) {
+        errors.push(response.response.message);
+      }
+    });
+    // if (errors.length) {
+    //   callback(new Error(errors.join('; ')));
+    // } else {
+    //   callback(null);
+    // }
+    // For now, just tell homebridge it was successful. Might make this a user-configurable option
     callback(null);
   }
 
@@ -561,51 +574,64 @@ export class Television {
 
     commands.forEach(command => {
       if (command.serial && this.protocols.serial) {
+        this.platform.log.debug(`Serial: ${JSON.stringify(command.serial)}`);
         command.serial.forEach(serialCommand => {
           const protocol = this.protocols.serial[serialCommand.interface];
-          serialCommand.commands.forEach(commandToSend => {
-            protocol.send(commandToSend.replace('\\r', '\r'), data => {
-              if (data instanceof Error) {
-                this.platform.log.error(data.toString());
+          if (protocol) {
+            serialCommand.commands.forEach(commandToSend => {
+              protocol.send(commandToSend.replace('\\r', '\r'), data => {
+                if (data instanceof Error) {
+                  this.platform.log.error(data.toString());
+                  if (done()) {
+                    callback(responses);
+                  }
+                }
+                responses.serial.push({
+                  interface: serialCommand.interface,
+                  response: data,
+                });
                 if (done()) {
                   callback(responses);
                 }
-              }
-              responses.serial.push({
-                interface: serialCommand.interface,
-                response: data,
               });
-              if (done()) {
-                callback(responses);
-              }
             });
-          });
+          } else {
+            this.platform.log.error(`Incorrectly configured serial command in configuration: ${JSON.stringify(command.serial)}`);
+            if (done()) {
+              callback(responses);
+            }
+          }
         });
       }
       if (command.lirc && this.protocols.lirc) {
+        this.platform.log.debug(`LIRC: ${JSON.stringify(command.lirc)}`);
         command.lirc.forEach(lircCommand => {
           if (lircCommand.name) {
             const protocol = this.protocols.lirc[lircCommand.name];
-            protocol.sendCommands(lircCommand.keys)
-              .then(() => {
-                responses.lirc.push({
-                  name: lircCommand.name,
-                  response: null,
+            if (protocol) {
+              protocol.sendCommands(lircCommand.keys)
+                .then(() => {
+                  responses.lirc.push({
+                    name: lircCommand.name,
+                    response: null,
+                  });
+                  if (done()) {
+                    callback(responses);
+                  }
+                })
+                .catch((error) => {
+                  responses.lirc.push({
+                    name: lircCommand.name,
+                    response: error,
+                  });
+                  this.platform.log.error(error);
+                  if (done()) {
+                    callback(responses);
+                  }
                 });
-                if (done()) {
-                  callback(responses);
-                }
-              })
-              .catch((error) => {
-                responses.lirc.push({
-                  name: lircCommand.name,
-                  response: error,
-                });
-                this.platform.log.error(error);
-                if (done()) {
-                  callback(responses);
-                }
-              });
+            } else {
+              this.platform.log.error(`Incorrectly configured LIRC command in configuration: ${JSON.stringify(command.lirc)}`);
+            }
           }
         });
       }
