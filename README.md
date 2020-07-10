@@ -1,5 +1,5 @@
 # Homebridge Television Universal Control
-![Build Status](https://github.com/pkmnct/homebridge-television-universal-control/workflows/Build%20and%20Lint/badge.svg?branch=master)
+[![Build Status](https://github.com/pkmnct/homebridge-television-universal-control/workflows/Build%20and%20Lint/badge.svg?branch=master)](https://github.com/pkmnct/homebridge-television-universal-control/actions?query=workflow%3A%22Build+and+Lint%22)
 
 This Homebridge plugin enables control of one or more compatible devices using one "Television" in HomeKit.
 
