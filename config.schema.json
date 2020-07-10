@@ -766,7 +766,6 @@
                   "properties": {
                     "commands": {
                       "title": "Commands",
-                      "required": true,
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -829,7 +828,6 @@
                   "properties": {
                     "commands": {
                       "title": "Commands",
-                      "required": true,
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -892,7 +890,6 @@
                   "properties": {
                     "commands": {
                       "title": "Commands",
-                      "required": true,
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -955,7 +952,6 @@
                   "properties": {
                     "commands": {
                       "title": "Commands",
-                      "required": true,
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -1018,7 +1014,6 @@
                   "properties": {
                     "commands": {
                       "title": "Commands",
-                      "required": true,
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -1081,7 +1076,6 @@
                   "properties": {
                     "commands": {
                       "title": "Commands",
-                      "required": true,
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -1144,7 +1138,6 @@
                   "properties": {
                     "commands": {
                       "title": "Commands",
-                      "required": true,
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -1207,7 +1200,6 @@
                   "properties": {
                     "commands": {
                       "title": "Commands",
-                      "required": true,
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -1270,7 +1262,6 @@
                   "properties": {
                     "commands": {
                       "title": "Commands",
-                      "required": true,
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -1333,7 +1324,6 @@
                   "properties": {
                     "commands": {
                       "title": "Commands",
-                      "required": true,
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -1396,7 +1386,6 @@
                   "properties": {
                     "commands": {
                       "title": "Commands",
-                      "required": true,
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -1459,7 +1448,6 @@
                   "properties": {
                     "commands": {
                       "title": "Commands",
-                      "required": true,
                       "type": "array",
                       "items": {
                         "type": "object",
