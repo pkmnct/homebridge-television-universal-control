@@ -36,8 +36,13 @@ export class SerialProtocol {
         private readonly logger: Logger,
         private readonly responseTimeout: number,
     ) {
+      const timeout = setTimeout((): void => {
+        logger.error(`[Serial] It is taking a long time to initialize serial port at ${this.path} with options ${JSON.stringify(options)}`);
+      }, 5000);
+
       // Initialize Serial Port
       this.port = new SerialPort(path, options, (error) => {
+        clearTimeout(timeout);
         if (error) {
           logger.error(error.message);
         } else {
@@ -55,6 +60,11 @@ export class SerialProtocol {
       this.queue = [];
       this.current = null;     
       this.timeout = null;
+
+      // Force disconnect when quitting application
+      process.on('exit', () => {
+        this.port.close((err) => err && logger.error(err.message));
+      });
       
       this.parser.on('data', (data: string): void => {
         // If we aren't expecting data, ignore it
