@@ -15,22 +15,22 @@ import { LircProtocol } from './protocols/lirc';
 
 interface Command {
   serial: {
-    interface: string;
+    device: string;
     commands: string[];
   }[];
   lirc: {
-    name: string;
-    keys: string[];
+    device: string;
+    commands: string[];
   }[];
 }
 
 interface CommandResponse {
   serial: {
-    interface: string;
+    device: string;
     response: string | Error;
   }[];
   lirc: {
-    name: string;
+    device: string;
     response: null | Error;
   }[];
 }
@@ -51,7 +51,7 @@ interface SerialProtocolGetStatus {
   };
 }
 
-interface SerialProtocolInterface {
+interface SerialProtocolDevice {
   name: string;
   path: string;
   options?: SerialProtocolOptions;
@@ -63,7 +63,7 @@ interface Input {
   commands: Command[];
   getStatus?: {
     serial?: {
-      interface: string;
+      device: string;
       response: string;
     }[];
   };
@@ -230,17 +230,17 @@ export class Television {
     };
 
     // Initialize all protocols
-    this.accessory.context.device.interfaces.serial.length &&
-      this.accessory.context.device.interfaces.serial.forEach((serialInterface: SerialProtocolInterface) => {
-        this.protocols.serial[serialInterface.name] = new SerialProtocol(
-          serialInterface.path,
-          serialInterface.options,
+    this.accessory.context.device.devices.serial.length &&
+      this.accessory.context.device.devices.serial.forEach((serialDevice: SerialProtocolDevice) => {
+        this.protocols.serial[serialDevice.name] = new SerialProtocol(
+          serialDevice.path,
+          serialDevice.options,
           this.platform.log,
-          serialInterface.timeout || 30,
+          serialDevice.timeout || 30,
         );
       });
 
-    this.accessory.context.device.interfaces.lirc.forEach((lircInterface: {
+    this.accessory.context.device.devices.lirc.forEach((lircDevice: {
       name: string;
       host: string;
       port?: number;
@@ -248,13 +248,13 @@ export class Television {
       delay?: number;
       timeout?: number;
     }) => {
-      this.protocols.lirc[lircInterface.name] = new LircProtocol(
-        lircInterface.host,
-        lircInterface.port || 8765,
-        lircInterface.remote,
-        lircInterface.delay || 0,
+      this.protocols.lirc[lircDevice.name] = new LircProtocol(
+        lircDevice.host,
+        lircDevice.port || 8765,
+        lircDevice.remote,
+        lircDevice.delay || 100,
         platform.log,
-        lircInterface.timeout || 500,
+        lircDevice.timeout || 500,
       );
     });
 
@@ -310,15 +310,15 @@ export class Television {
   getActive(callback: CharacteristicGetCallback): void {
     this.platform.log.debug('Getting power state');
 
-    // Find the interfaces to query
-    const interfacesToQuery: SerialProtocolInterface[] = this.accessory.context.device.interfaces.serial.filter(
-      (serialInterface: SerialProtocolInterface) => serialInterface.getStatus && serialInterface.getStatus.power,
+    // Find the devices to query
+    const devicesToQuery: SerialProtocolDevice[] = this.accessory.context.device.devices.serial.filter(
+      (serialDevice: SerialProtocolDevice) => serialDevice.getStatus && serialDevice.getStatus.power,
     );
 
-    if (interfacesToQuery) {
+    if (devicesToQuery) {
       // If any individual device (that has getStatus power configured) is off, this will be overridden and the universal TV will show off.
       let isOn = true;
-      let counter = interfacesToQuery.length;
+      let counter = devicesToQuery.length;
 
       const done = (): void => {
         counter--;
@@ -328,18 +328,18 @@ export class Television {
         }
       };
 
-      interfacesToQuery.forEach(serialInterface => {
-        this.protocols.serial[serialInterface.name].send(serialInterface.getStatus!.power!.command, data => {
+      devicesToQuery.forEach(serialDevice => {
+        this.protocols.serial[serialDevice.name].send(serialDevice.getStatus!.power!.command, data => {
           if (data instanceof Error) {
             this.platform.log.error(data.toString());
             isOn = false;
             done();
           } else if (
-            data.includes(serialInterface.getStatus!.power!.onResponse) ||
-            data.includes(serialInterface.getStatus!.power!.offResponse)
+            data.includes(serialDevice.getStatus!.power!.onResponse) ||
+            data.includes(serialDevice.getStatus!.power!.offResponse)
           ) {
-            this.platform.log.debug(`${serialInterface.getStatus!.power!.command.trim()} received success: (${data})`);
-            isOn = data.includes(serialInterface.getStatus!.power!.onResponse) ? true : false;
+            this.platform.log.debug(`${serialDevice.getStatus!.power!.command.trim()} received success: (${data})`);
+            isOn = data.includes(serialDevice.getStatus!.power!.onResponse) ? true : false;
             done();
           } else {
             const errorMessage = `While attempting to get power state, the serial command returned '${data}'`;
@@ -378,13 +378,13 @@ export class Television {
   ): void {
     this.platform.log.debug('Getting input state from TV');
 
-    // Find the interfaces to query (any serial interface with a getStatus.input key)
-    const interfacesToQuery: SerialProtocolInterface[] = this.accessory.context.device.interfaces.serial.filter(
-      (serialInterface: SerialProtocolInterface) => serialInterface.getStatus && serialInterface.getStatus.input,
+    // Find the devices to query (any serial interface with a getStatus.input key)
+    const devicesToQuery: SerialProtocolDevice[] = this.accessory.context.device.devices.serial.filter(
+      (serialDevice: SerialProtocolDevice) => serialDevice.getStatus && serialDevice.getStatus.input,
     );
 
     // We need to keep track to make sure we've heard responses from each devices
-    let counter = interfacesToQuery.length;
+    let counter = devicesToQuery.length;
 
     // Store the responses from each device to be able to determine the input
     const currentInput: {
@@ -403,7 +403,7 @@ export class Television {
             let isValid = true;
             input.getStatus.serial.forEach((serialInputStatus) => {
               // If 
-              if (!((currentInput[serialInputStatus.interface]).includes(serialInputStatus.response))) {
+              if (!((currentInput[serialInputStatus.device]).includes(serialInputStatus.response))) {
                 isValid = false;
               }
             });
@@ -440,9 +440,9 @@ export class Television {
     };
 
     // Actually query the devices
-    interfacesToQuery.forEach(serialInterface => {
-      this.protocols.serial[serialInterface.name].send(serialInterface.getStatus!.input!.command, data => {
-        currentInput[serialInterface.name] = data instanceof Error ? '' : data.trim();
+    devicesToQuery.forEach(serialDevice => {
+      this.protocols.serial[serialDevice.name].send(serialDevice.getStatus!.input!.command, data => {
+        currentInput[serialDevice.name] = data instanceof Error ? '' : data.trim();
         done();
       });
     });
@@ -452,15 +452,15 @@ export class Television {
     callback: CharacteristicGetCallback,
   ): void {
 
-    // Find the interfaces to query
-    const interfacesToQuery: SerialProtocolInterface[] = this.accessory.context.device.interfaces.serial.filter(
-      (serialInterface: SerialProtocolInterface) => serialInterface.getStatus && serialInterface.getStatus.mute,
+    // Find the devices to query
+    const devicesToQuery: SerialProtocolDevice[] = this.accessory.context.device.devices.serial.filter(
+      (serialDevice: SerialProtocolDevice) => serialDevice.getStatus && serialDevice.getStatus.mute,
     );
 
-    if (interfacesToQuery) {
+    if (devicesToQuery) {
       // If any individual device is muted, this will be overridden and the universal TV will show muted.
       let muted = false;
-      let counter = interfacesToQuery.length;
+      let counter = devicesToQuery.length;
 
       const done = (): void => {
         counter--;
@@ -470,17 +470,17 @@ export class Television {
         }
       };
 
-      interfacesToQuery.forEach(serialInterface => {
-        this.protocols.serial[serialInterface.name].send(serialInterface.getStatus!.mute!.command, data => {
+      devicesToQuery.forEach(serialDevice => {
+        this.protocols.serial[serialDevice.name].send(serialDevice.getStatus!.mute!.command, data => {
           if (data instanceof Error) {
             this.platform.log.error(data.toString());
             done();
           } else if (
-            data.includes(serialInterface.getStatus!.mute!.onResponse) ||
-            data.includes(serialInterface.getStatus!.mute!.offResponse)
+            data.includes(serialDevice.getStatus!.mute!.onResponse) ||
+            data.includes(serialDevice.getStatus!.mute!.offResponse)
           ) {
-            this.platform.log.debug(`${serialInterface.getStatus!.mute!.command.trim()} received success: (${data})`);
-            muted = data.includes(serialInterface.getStatus!.mute!.onResponse) ? true : false;
+            this.platform.log.debug(`${serialDevice.getStatus!.mute!.command.trim()} received success: (${data})`);
+            muted = data.includes(serialDevice.getStatus!.mute!.onResponse) ? true : false;
             done();
           } else {
             const errorMessage = `While attempting to get mute state, the serial command returned '${data}'`;
@@ -576,7 +576,7 @@ export class Television {
       if (command.serial && this.protocols.serial) {
         this.platform.log.debug(`Serial: ${JSON.stringify(command.serial)}`);
         command.serial.forEach(serialCommand => {
-          const protocol = this.protocols.serial[serialCommand.interface];
+          const protocol = this.protocols.serial[serialCommand.device];
           if (protocol) {
             serialCommand.commands.forEach(commandToSend => {
               protocol.send(commandToSend.replace('\\r', '\r'), data => {
@@ -587,7 +587,7 @@ export class Television {
                   }
                 }
                 responses.serial.push({
-                  interface: serialCommand.interface,
+                  device: serialCommand.device,
                   response: data,
                 });
                 if (done()) {
@@ -606,13 +606,13 @@ export class Television {
       if (command.lirc && this.protocols.lirc) {
         this.platform.log.debug(`LIRC: ${JSON.stringify(command.lirc)}`);
         command.lirc.forEach(lircCommand => {
-          if (lircCommand.name) {
-            const protocol = this.protocols.lirc[lircCommand.name];
+          if (lircCommand.device) {
+            const protocol = this.protocols.lirc[lircCommand.device];
             if (protocol) {
-              protocol.sendCommands(lircCommand.keys)
+              protocol.sendCommands(lircCommand.commands)
                 .then(() => {
                   responses.lirc.push({
-                    name: lircCommand.name,
+                    device: lircCommand.device,
                     response: null,
                   });
                   if (done()) {
@@ -621,7 +621,7 @@ export class Television {
                 })
                 .catch((error) => {
                   responses.lirc.push({
-                    name: lircCommand.name,
+                    device: lircCommand.device,
                     response: error,
                   });
                   this.platform.log.error(error);

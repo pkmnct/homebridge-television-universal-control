@@ -62,7 +62,7 @@ export class TelevisionUniversalControl implements DynamicPlatformPlugin {
    */
   discoverDevices(): void {
     // loop over the configured devices and register each one if it has not already been registered
-    for (const device of this.config.devices) {
+    for (const device of this.config.groups) {
       // generate a unique id for the accessory this should be generated from
       // something globally unique, but constant, for example, the device serial
       // number or MAC address
