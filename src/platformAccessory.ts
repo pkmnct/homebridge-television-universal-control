@@ -6,7 +6,6 @@ import type {
   CharacteristicSetCallback,
   CharacteristicGetCallback,
 } from 'homebridge';
-import { RemoteKey } from 'hap-nodejs/dist/lib/gen/HomeKit-TV';
 
 import { TelevisionUniversalControl } from './platform';
 
@@ -189,7 +188,7 @@ export class Television {
     this.configuredKeys = [];
     this.configuredKeyStrings.forEach(string => {
       // TODO: there is probably a cleaner way to get this via typescript...
-      this.configuredKeys.push((RemoteKey as unknown as { [key: string]: number })[string]);
+      this.configuredKeys.push((this.platform.Characteristic.RemoteKey as unknown as { [key: string]: number })[string]);
     });
 
     // register inputs
