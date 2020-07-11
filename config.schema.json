@@ -189,7 +189,7 @@
                       "delay": {
                         "title": "Delay between IR send commands",
                         "type": "integer",
-                        "placeholder": 100
+                        "placeholder": 250
                       }
                     }
                   }
