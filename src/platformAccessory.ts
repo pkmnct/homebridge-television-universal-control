@@ -312,6 +312,8 @@ export class Television {
     if (value !== this.states.power) {
       this.sendCommands(commands, response => this.handleResponse(response, callback));
       this.states.power = value as boolean;
+    } else {
+      callback(new Error('Active state did not change, skipping setActive'));
     }
   }
 
