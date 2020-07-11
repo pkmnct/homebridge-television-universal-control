@@ -41,6 +41,11 @@
                         "type": "number",
                         "placeholder": "50"
                       },
+                      "delimiter": {
+                        "title": "Serial response delimiter",
+                        "type": "string",
+                        "placeholder": "\r"
+                      },
                       "options": {
                         "title": "Options for serial port",
                         "type": "object",

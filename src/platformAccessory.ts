@@ -56,6 +56,7 @@ interface SerialProtocolDevice {
   options?: SerialProtocolOptions;
   getStatus?: SerialProtocolGetStatus;
   requestTimeout?: number;
+  delimiter?: string | Buffer | number[];
 }
 
 interface Input {
@@ -254,6 +255,7 @@ export class Television {
           serialDevice.options,
           this.platform.log,
           serialDevice.requestTimeout || 50,
+          serialDevice.delimiter || '\r',
         );
       });
 

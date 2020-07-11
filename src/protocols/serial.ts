@@ -32,6 +32,7 @@ export class SerialProtocol {
         private readonly options: SerialProtocolOptions | undefined,
         private readonly logger: Logger,
         private readonly responseTimeout: number,
+        private readonly delimiter: string | Buffer | number[],
     ) {
       // Alert if the serial port initialization callback doesn't happen very quickly
       const timeout = setTimeout((): void => {
@@ -53,7 +54,7 @@ export class SerialProtocol {
 
       // Initialize Parser
       this.parser = this.port.pipe(new SerialPort.parsers.Readline({
-        delimiter: '\r',
+        delimiter: this.delimiter,
       }));
 
       // Force disconnect when quitting application
