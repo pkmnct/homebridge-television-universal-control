@@ -446,9 +446,8 @@ export class Television {
               isValid = false;
             } else {
               if (!currentInput[serialDevice.device]) {
-                // This device was not queried, it can not be valid
+                // This device was not queried, it can not be valid.
                 isValid = false;
-                this.platform.log.error(`While checking input, ${serialDevice.device} was not queried. Check that it is configured correctly.`);
               } else if (!((currentInput[serialDevice.device]).includes(serialDevice.response))) {
                 // Else if the response from the device doesn't match the response expected from configuration for input
                 isValid = false;
