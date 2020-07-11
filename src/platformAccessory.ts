@@ -55,7 +55,7 @@ interface SerialProtocolDevice {
   path: string;
   options?: SerialProtocolOptions;
   getStatus?: SerialProtocolGetStatus;
-  timeout?: number;
+  requestTimeout?: number;
 }
 
 interface Input {
@@ -96,6 +96,10 @@ export class Television {
 
   private configuredKeyStrings: string[];
   private configuredKeys: number[];
+
+  private devicesToQueryForPower: SerialProtocolDevice[];
+  private devicesToQueryForInput: SerialProtocolDevice[];
+  private devicesToQueryForMute: SerialProtocolDevice[];
 
   constructor(
     private readonly platform: TelevisionUniversalControl,
@@ -191,6 +195,20 @@ export class Television {
       this.configuredKeys.push((this.platform.Characteristic.RemoteKey as unknown as { [key: string]: number })[string]);
     });
 
+
+    // Figure out which devices to query for power (those that have getStatus.power.command configured)
+    this.devicesToQueryForPower = this.accessory.context.device.devices.serial.filter(
+      (serialDevice: SerialProtocolDevice) => serialDevice.getStatus?.power?.command,
+    );
+    // Figure out which devices to query for inputs (those that have getStatus.input.command configured)
+    this.devicesToQueryForInput = this.accessory.context.device.devices.serial.filter(
+      (serialDevice: SerialProtocolDevice) => serialDevice.getStatus?.input?.command,
+    );
+    // Figure out which devices to query for mute (those that have getStatus.mute.command configured)
+    this.devicesToQueryForMute = this.accessory.context.device.devices.serial.filter(
+      (serialDevice: SerialProtocolDevice) => serialDevice.getStatus?.mute?.command,
+    );
+
     // register inputs
     accessory.context.device.inputs && accessory.context.device.inputs.forEach(
       (
@@ -232,10 +250,10 @@ export class Television {
     this.accessory.context.device.devices.serial.length &&
       this.accessory.context.device.devices.serial.forEach((serialDevice: SerialProtocolDevice) => {
         this.protocols.serial[serialDevice.name] = new SerialProtocol(
-          serialDevice.path,
+          serialDevice.path || '/dev/ttyUSB0',
           serialDevice.options,
           this.platform.log,
-          serialDevice.timeout || 30,
+          serialDevice.requestTimeout || 50,
         );
       });
 
@@ -251,7 +269,7 @@ export class Television {
         lircDevice.host,
         lircDevice.port || 8765,
         lircDevice.remote,
-        lircDevice.delay || 100,
+        lircDevice.delay || 250,
         platform.log,
         lircDevice.timeout || 500,
       );
@@ -264,6 +282,8 @@ export class Television {
    * These are sent when the user activates a RemoteKey
    */
   setRemoteKey = (value: CharacteristicValue, callback: CharacteristicSetCallback): void => {
+    this.platform.log.debug('setRemoteKey called');
+
     if (value in this.configuredKeys) {
       this.sendCommands(this.accessory.context.device.remoteKeys[
         this.configuredKeyStrings[this.configuredKeys.indexOf(value as number)]
@@ -283,7 +303,7 @@ export class Television {
    * These are sent when the user changes the state of an accessory.
    */
   setActive(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
-    this.platform.log.debug('setActive ' + value);
+    this.platform.log.debug('setActive called with: ' + value);
 
     const commands = value ? this.accessory.context.device.power.on.commands : this.accessory.context.device.power.off.commands;
 
@@ -307,17 +327,12 @@ export class Television {
    * this.tvService.updateCharacteristic(this.platform.Characteristic.On, true)
    */
   getActive(callback: CharacteristicGetCallback): void {
-    this.platform.log.debug('Getting power state');
+    this.platform.log.debug('getActive called');
 
-    // Find the devices to query
-    const devicesToQuery: SerialProtocolDevice[] = this.accessory.context.device.devices.serial.filter(
-      (serialDevice: SerialProtocolDevice) => serialDevice.getStatus && serialDevice.getStatus.power,
-    );
-
-    if (devicesToQuery) {
+    if (this.devicesToQueryForPower) {
       // If any individual device (that has getStatus power configured) is off, this will be overridden and the universal TV will show off.
       let isOn = true;
-      let counter = devicesToQuery.length;
+      let counter = this.devicesToQueryForPower.length;
 
       const done = (): void => {
         counter--;
@@ -327,7 +342,7 @@ export class Television {
         }
       };
 
-      devicesToQuery.forEach(serialDevice => {
+      this.devicesToQueryForPower.forEach(serialDevice => {
         this.protocols.serial[serialDevice.name].send(serialDevice.getStatus!.power!.command, data => {
           if (data instanceof Error) {
             this.platform.log.error(data.toString());
@@ -362,6 +377,7 @@ export class Television {
     value: CharacteristicValue,
     callback: CharacteristicSetCallback,
   ): void {
+    this.platform.log.debug('setActiveIdentifier called with: ' + value);
     this.sendCommands(this.accessory.context.device.inputs[value as number].commands, response => {
       this.states.input = value as number;
       this.handleResponse(response, callback);
@@ -375,91 +391,109 @@ export class Television {
   getActiveIdentifier(
     callback: CharacteristicSetCallback,
   ): void {
-    this.platform.log.debug('Getting input state from TV');
+    this.platform.log.debug('getActiveIdentifier called');
 
-    // Find the devices to query (any serial interface with a getStatus.input key)
-    const devicesToQuery: SerialProtocolDevice[] = this.accessory.context.device.devices.serial.filter(
-      (serialDevice: SerialProtocolDevice) => serialDevice.getStatus && serialDevice.getStatus.input,
-    );
+    // We need to keep track to make sure we've heard responses from each devices.
+    let counter = this.devicesToQueryForInput.length;
 
-    // We need to keep track to make sure we've heard responses from each devices
-    let counter = devicesToQuery.length;
-
-    // Store the responses from each device to be able to determine the input
+    // Store the responses from each serial device. Key is the name of device, value is the response to check each input for.
     const currentInput: {
       [key: string]: string;
     } = {};
 
-    const done = (): void => {
-      counter--;
+    // If there are serial devices with getStatus.input configured
+    if (this.devicesToQueryForInput.length) {
+      // Actually query the devices. This does not run if there are no valid devices configured
+      this.devicesToQueryForInput.forEach(serialDevice => {
+        // We can use the typescript non-null assertion because this array had been filtered to only include those with a command configured.
+        this.protocols.serial[serialDevice.name].send(serialDevice.getStatus!.input!.command, data => {
+          if (!(data instanceof Error)) {
+            currentInput[serialDevice.name] = data.trim();
+          }
+          counter--;
 
-      // When all device responses are triggered
-      if (counter === 0) {
-        const possibleInputs: number[] = [];
-        this.accessory.context.device.inputs.forEach((input: Input, i: number) => {
-          // If this input has getStatus for serial
-          if (input.getStatus && input.getStatus.serial) {
-            let isValid = true;
-            input.getStatus.serial.forEach((serialInputStatus) => {
-              // If 
-              if (!((currentInput[serialInputStatus.device]).includes(serialInputStatus.response))) {
-                isValid = false;
-              }
-            });
-            if (isValid) {
-              possibleInputs.push(i);
-            }
+          // When all device responses are triggered
+          if (counter === 0) {
+            done();
           }
         });
+      });
+    } else {
+      // No serial device getStatus configured. Fall back to internal state.
+      callback(null, this.states.input);
+    }
 
-        if (possibleInputs.length) {
-          if (possibleInputs.length > 1) {
-            this.platform.log.debug(`Possible inputs: ${possibleInputs.join(', ')}`);
-            // The input is ambiguous, check if the current state is a possibility
-            if (this.states.input in possibleInputs) {
-              this.platform.log.debug('Current input is a possible input, not changing');
-              // The current state is valid, using it
-              callback(null, this.states.input);
+    // When done querying all of the serial devices
+    const done = (): void => {
+      // We need to store the possible inputs in case status is ambiguous
+      const possibleInputs: number[] = [];
+
+      // Loop over each input in the configuration
+      this.accessory.context.device.inputs.forEach((input: Input, i: number) => {
+        // If the input has the getStatus for serial
+        if (input.getStatus && input.getStatus.serial && input.getStatus.serial) {
+          // Assume it is a possible input. This will be overwritten if the responses from the serial device do not match
+          let isValid = true;
+          // For each device configured to query
+          input.getStatus.serial.forEach((serialDevice) => {
+            if (!serialDevice.device) {
+              this.platform.log.warn(`${input.name} has incorrectly configured getStatus section. Missing device name.`);
+              isValid = false;
+            } else if (!serialDevice.response) {
+              this.platform.log.warn(`${input.name} has incorrectly configured getStatus section. Missing expected response.`);
+              isValid = false;
             } else {
-              this.platform.log.debug('Current input is not a valid input and input is ambiguous, using first possible input');
-              // The current state is not valid, using first item in array
-              this.states.input = possibleInputs[0];
-              callback(null, possibleInputs[0]);
+              if (!currentInput[serialDevice.device]) {
+                // This device was not queried, it can not be valid
+                isValid = false;
+                this.platform.log.error(`While checking input, ${serialDevice.device} was not queried. Check that it is configured correctly.`);
+              } else if (!((currentInput[serialDevice.device]).includes(serialDevice.response))) {
+                // Else if the response from the device doesn't match the response expected from configuration for input
+                isValid = false;
+              }
             }
+          });
+          if (isValid) {
+            possibleInputs.push(i);
+          }
+        }
+      });
+
+      if (possibleInputs.length) {
+        if (possibleInputs.length > 1) {
+          this.platform.log.debug(`Possible inputs: ${possibleInputs.join(', ')}`);
+          // The input is ambiguous, check if the current state is a possibility
+          if (this.states.input in possibleInputs) {
+            this.platform.log.debug('Current input is a possible input, not changing');
+            // The current state is valid, using it
+            callback(null, this.states.input);
           } else {
-            // Only one valid input, use it
+            this.platform.log.debug('Current input is not a valid input and input is ambiguous, using first possible input');
+            // The current state is not valid, using first item in array
             this.states.input = possibleInputs[0];
             callback(null, possibleInputs[0]);
           }
         } else {
-          // Could not determine input, falling back to internal state
-          callback(null, this.states.input);
+          // Only one valid input, use it
+          this.states.input = possibleInputs[0];
+          callback(null, possibleInputs[0]);
         }
+      } else {
+        // Could not determine input, falling back to internal state
+        callback(null, this.states.input);
       }
     };
-
-    // Actually query the devices
-    devicesToQuery.forEach(serialDevice => {
-      this.protocols.serial[serialDevice.name].send(serialDevice.getStatus!.input!.command, data => {
-        currentInput[serialDevice.name] = data instanceof Error ? '' : data.trim();
-        done();
-      });
-    });
   }
 
   getMute(
     callback: CharacteristicGetCallback,
   ): void {
+    this.platform.log.debug('getMute called');
 
-    // Find the devices to query
-    const devicesToQuery: SerialProtocolDevice[] = this.accessory.context.device.devices.serial.filter(
-      (serialDevice: SerialProtocolDevice) => serialDevice.getStatus && serialDevice.getStatus.mute,
-    );
-
-    if (devicesToQuery) {
+    if (this.devicesToQueryForMute) {
       // If any individual device is muted, this will be overridden and the universal TV will show muted.
       let muted = false;
-      let counter = devicesToQuery.length;
+      let counter = this.devicesToQueryForMute.length;
 
       const done = (): void => {
         counter--;
@@ -469,7 +503,7 @@ export class Television {
         }
       };
 
-      devicesToQuery.forEach(serialDevice => {
+      this.devicesToQueryForMute.forEach(serialDevice => {
         this.protocols.serial[serialDevice.name].send(serialDevice.getStatus!.mute!.command, data => {
           if (data instanceof Error) {
             this.platform.log.error(data.toString());
@@ -503,6 +537,7 @@ export class Television {
     value: CharacteristicValue,
     callback: CharacteristicSetCallback,
   ): void {
+    this.platform.log.debug('setMute called with: ' + value);
     const commands = value ?
       this.accessory.context.device.speaker.mute_on.commands :
       this.accessory.context.device.speaker.mute_off.commands;
@@ -521,6 +556,7 @@ export class Television {
     value: CharacteristicValue,
     callback: CharacteristicSetCallback,
   ): void {
+    this.platform.log.debug('setVolume called with: ' + value);
     const commands = value === this.platform.Characteristic.VolumeSelector.DECREMENT ?
       this.accessory.context.device.speaker.volume_down.commands :
       this.accessory.context.device.speaker.volume_up.commands;
@@ -532,17 +568,18 @@ export class Television {
     response: CommandResponse,
     callback: CharacteristicSetCallback,
   ): void => {
-    const errors: string[] = [];
-    [...response.serial, ...response.lirc].forEach(response => {
-      if (response.response instanceof Error) {
-        errors.push(response.response.message);
-      }
-    });
+    // const errors: string[] = [];
+    // [...response.serial, ...response.lirc].forEach(response => {
+    //   if (response.response instanceof Error) {
+    //     errors.push(response.response.message);
+    //   }
+    // });
     // if (errors.length) {
     //   callback(new Error(errors.join('; ')));
     // } else {
     //   callback(null);
     // }
+
     // For now, just tell homebridge it was successful. Might make this a user-configurable option
     callback(null);
   }
