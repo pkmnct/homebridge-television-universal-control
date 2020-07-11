@@ -268,7 +268,7 @@ export class Television {
       timeout?: number;
     }) => {
       this.protocols.lirc[lircDevice.name] = new LircProtocol(
-        lircDevice.host,
+        lircDevice.host || 'localhost',
         lircDevice.port || 8765,
         lircDevice.remote,
         lircDevice.delay || 250,
