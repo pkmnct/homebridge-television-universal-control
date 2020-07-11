@@ -22,13 +22,10 @@ export class SerialProtocol {
     private readonly port: SerialPort;
     private readonly parser: SerialPort.parsers.Readline;
 
-    private readonly queue:  SerialProtocolCommand[];
-    private busy: boolean;
-    private current: SerialProtocolCommand | null;
-    private timeout: ReturnType<typeof setTimeout> | null;
-
-    public send: (command: SerialProtocolCommand['command'], callback: SerialProtocolCommand['callback']) => void;
-    private processQueue: () => void;
+    private readonly queue:  SerialProtocolCommand[] = [];
+    private busy = false;
+    private current: SerialProtocolCommand | null = null;
+    private timeout: ReturnType<typeof setTimeout> | null = null;
 
     constructor(
         private readonly path: string,
@@ -36,17 +33,21 @@ export class SerialProtocol {
         private readonly logger: Logger,
         private readonly responseTimeout: number,
     ) {
+      // Alert if the serial port initialization callback doesn't happen very quickly
       const timeout = setTimeout((): void => {
-        logger.error(`[Serial] It is taking a long time to initialize serial port at ${this.path} with options ${JSON.stringify(options)}`);
+        logger.error(
+          `[Serial] It is taking a long time to initialize serial port at ${this.path}. ` +
+          'This could indicate an issue with the serial interface.',
+        );
       }, 5000);
 
       // Initialize Serial Port
-      this.port = new SerialPort(path, options, (error) => {
+      this.port = new SerialPort(this.path, this.options, (error) => {
         clearTimeout(timeout);
         if (error) {
-          logger.error(error.message);
+          this.logger.error(error.message);
         } else {
-          logger.debug(`[Serial] Initialized serial port at ${this.path} with options ${JSON.stringify(options)}`);
+          this.logger.debug(`[Serial] Initialized serial port at ${this.path} with options ${JSON.stringify(options)}`);
         }
       });
 
@@ -55,68 +56,68 @@ export class SerialProtocol {
         delimiter: '\r',
       }));
 
-      // Initialize other variables
-      this.busy = false;
-      this.queue = [];
-      this.current = null;     
-      this.timeout = null;
-
       // Force disconnect when quitting application
       process.on('exit', () => {
-        this.port.close((err) => err && logger.error(err.message));
+        this.port.close((err) => err && this.logger.error(err.message));
       });
       
-      this.parser.on('data', (data: string): void => {
-        // If we aren't expecting data, ignore it
-        if (!this.current) {
-          // TODO, listen for these and send as events to controller. 
-          // This will allow us to update our state right as inputs change instead of waiting for a refresh
-          return;
-        }
+      // Listen for responses
+      this.parser.on('data', this.handleResponse);
+    }
 
-        logger.debug(`[Serial] Got Data ${data.trim()}, sending to: ${JSON.stringify(this.current)}`);
-        this.current.callback(data);
-        this.current = null;
-        this.processQueue();
-      });
+    private handleResponse = (data: string): void => {
+      // Stop timeout timer
+      this.timeout && clearTimeout(this.timeout);
+      this.timeout = null;
+      // If we aren't expecting data, ignore it
+      if (!this.current) {
+        // TODO, listen for these and send as events to controller. 
+        // This will allow us to update our state right as inputs change instead of waiting for a refresh
+        return;
+      }
 
-      this.send = (command: SerialProtocolCommand['command'], callback: SerialProtocolCommand['callback']): void => {
-        logger.debug(`[Serial] Pushing command ${command.trim()} on to queue.`);
-        // Push the command on the queue
-        this.queue.push({command, callback});
+      this.logger.debug(`[Serial] Got Data ${data.trim()}, sending to: ${JSON.stringify(this.current)}`);
+      this.current.callback(data);
+      this.current = null;
+      this.processQueue();
+    };
 
-        // If we are processing another command, return
-        if (this.busy) {
-          logger.debug('[Serial] Currently busy');
-          return;
-        }
+    private processQueue = (): void => {
+      // Get the command from the queue
+      const next = this.queue.shift();
 
-        // We are now processing a command
-        this.busy = true;
-        this.processQueue();
-      };
+      this.logger.debug(`[Serial] Processing queue, items left to process: ${this.queue.length}`);
 
-      this.processQueue = (): void => {
-        // Get the command from the queue
-        const next = this.queue.shift();
+      if (!next) {
+        // There are no more commands on the queue
+        this.busy = false;
+      } else {
+        this.current = next;
+        this.logger.info(`Sending command to ${this.path}: ${next.command.trim()}`);
+        this.port.write(next.command);
 
-        if (!next) {
-          this.busy = false;
-        } else {
-          this.current = next;
-          logger.info(`Sending command to ${this.path}: ${next.command.trim()}`);
-          this.port.write(next.command);
+        this.timeout = setTimeout(() => {
+          if (this.busy && this.current) {
+            this.current.callback(new Error(`${this.current.command.trim()} timed out after ${this.responseTimeout}ms. Skipping`));
+            this.processQueue();
+          }
+        }, this.responseTimeout);
+      }
+    };
 
-          // If after timeout has elapsed a command still hasn't processed, skip it and go to the next.
-          this.timeout && clearTimeout(this.timeout);
-          this.timeout = setTimeout(() => {
-            if (this.busy && this.current) {
-              this.current.callback(new Error(`${this.current.command.trim()} timed out after ${responseTimeout}ms. Skipping`));
-              this.busy = false;
-              this.processQueue();
-            }
-          }, responseTimeout);
-        }
-      };
-    }    
+    public send = (command: SerialProtocolCommand['command'], callback: SerialProtocolCommand['callback']): void => {
+      this.logger.debug(`[Serial] Pushing command ${command.trim()} on to queue.`);
+      // Push the command on the queue
+      this.queue.push({command, callback});
+
+      // If we are processing another command, return
+      if (this.busy) {
+        this.logger.debug('[Serial] Currently busy');
+        return;
+      }
+
+      // We are now processing a command
+      this.busy = true;
+      this.processQueue();
+    };
 }

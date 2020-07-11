@@ -39,7 +39,7 @@
                       "requestTimeout": {
                         "title": "Timeout for serial commands (in ms)",
                         "type": "number",
-                        "placeholder": "30"
+                        "placeholder": "50"
                       },
                       "options": {
                         "title": "Options for serial port",
@@ -105,7 +105,7 @@
                           "lock": {
                             "title": "Prevent other processes from opening the port",
                             "type": "boolean",
-                            "default": true
+                            "default": false
                           }
                         }
                       },
