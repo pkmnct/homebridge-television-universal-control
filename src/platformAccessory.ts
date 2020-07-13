@@ -258,7 +258,6 @@ export class Television {
       this.configuredKeys.push((this.platform.Characteristic.RemoteKey as unknown as { [key: string]: number })[string]);
     });
 
-
     // Figure out which devices to query for power (those that have getStatus.power.command configured)
     this.devicesToQueryForPower = this.device.devices?.serial?.filter(
       (serialDevice: SerialProtocolDevice) => serialDevice.getStatus?.power?.command,
@@ -453,7 +452,8 @@ export class Television {
   ): void {
     this.platform.log.debug('getActiveIdentifier called');
 
-    if (this.devicesToQueryForInput) {
+    // If there are serial devices with getStatus.input configured
+    if (this.devicesToQueryForInput?.length) {
       // We need to keep track to make sure we've heard responses from each devices.
       let counter = this.devicesToQueryForInput.length;
 
@@ -461,28 +461,22 @@ export class Television {
       const currentInput: {
         [key: string]: string;
       } = {};
+      
+      // Actually query the devices
+      this.devicesToQueryForInput.forEach(serialDevice => {
+        // We can use the typescript non-null assertion because this array had been filtered to only include those with a command configured.
+        this.protocols.serial[serialDevice.name].send(serialDevice.getStatus!.input!.command, data => {
+          if (!(data instanceof Error)) {
+            currentInput[serialDevice.name] = data.trim();
+          }
+          counter--;
 
-      // If there are serial devices with getStatus.input configured
-      if (this.devicesToQueryForInput.length) {
-        // Actually query the devices. This does not run if there are no valid devices configured
-        this.devicesToQueryForInput.forEach(serialDevice => {
-          // We can use the typescript non-null assertion because this array had been filtered to only include those with a command configured.
-          this.protocols.serial[serialDevice.name].send(serialDevice.getStatus!.input!.command, data => {
-            if (!(data instanceof Error)) {
-              currentInput[serialDevice.name] = data.trim();
-            }
-            counter--;
-
-            // When all device responses are triggered
-            if (counter === 0) {
-              done();
-            }
-          });
+          // When all device responses are triggered
+          if (counter === 0) {
+            done();
+          }
         });
-      } else {
-        // No serial device getStatus configured. Fall back to internal state.
-        callback(null, this.states.input);
-      }
+      });
 
       // When done querying all of the serial devices
       const done = (): void => {
@@ -522,6 +516,7 @@ export class Television {
         if (possibleInputs.length) {
           if (possibleInputs.length > 1) {
             this.platform.log.debug(`Possible inputs: ${possibleInputs.join(', ')}`);
+
             // The input is ambiguous, check if the current state is a possibility
             if (this.states.input in possibleInputs) {
               this.platform.log.debug('Current input is a possible input, not changing');
@@ -660,35 +655,41 @@ export class Television {
       return commandCounter === 0;
     };
 
-    if (!commands) {
+    if (!commands || commands.length === 0) {
+      this.platform.log.error('No commands were sent.');
       callback(responses);
     }
 
     commands?.forEach(command => {
-      if (command.serial && this.protocols.serial) {
+      if (command.serial) {
         command.serial.forEach(serialCommand => {
-          serialCommand.commands.forEach(() => commandCounter++);
+          // Each serial command is sent individually
+          commandCounter += serialCommand.commands.length;
         });
       }
-      if (command.lirc && this.protocols.lirc) {
-        command.lirc.forEach(() => commandCounter++);
+      if (command.lirc) {
+        command.lirc.forEach(lircCommand => {
+          if (lircCommand.commands.length) {
+            // All lirc commands are sent to server at once
+            commandCounter ++;
+          }
+        });
       }
     });
     this.platform.log.debug(`About to send ${commandCounter} commands`);
 
     commands?.forEach(command => {
-      if (command.serial && this.protocols.serial) {
+      // If there are serial commands
+      if (command.serial) {
         this.platform.log.debug(`Serial: ${JSON.stringify(command.serial)}`);
         command.serial.forEach(serialCommand => {
+          // Make sure the protocol indicated is configured
           const protocol = this.protocols.serial[serialCommand.device];
           if (protocol) {
             serialCommand.commands.forEach(commandToSend => {
-              protocol.send(commandToSend.replace('\\r', '\r'), data => {
+              protocol.send(commandToSend, data => {
                 if (data instanceof Error) {
                   this.platform.log.error(data.toString());
-                  if (done()) {
-                    callback(responses);
-                  }
                 }
                 responses.serial.push({
                   device: serialCommand.device,
@@ -701,16 +702,20 @@ export class Television {
             });
           } else {
             this.platform.log.error(`Incorrectly configured serial command in configuration: ${JSON.stringify(command.serial)}`);
-            if (done()) {
-              callback(responses);
-            }
+            // We still need to loop through the commands to get the counter in the right spot
+            serialCommand.commands.forEach(() => {
+              if (done()) {
+                callback(responses);
+              }
+            });
           }
         });
       }
-      if (command.lirc && this.protocols.lirc) {
+      if (command.lirc) {
         this.platform.log.debug(`LIRC: ${JSON.stringify(command.lirc)}`);
         command.lirc.forEach(lircCommand => {
           if (lircCommand.device) {
+            // Make sure the protocol indicated is configured
             const protocol = this.protocols.lirc[lircCommand.device];
             if (protocol) {
               protocol.sendCommands(lircCommand.commands)
@@ -719,9 +724,6 @@ export class Television {
                     device: lircCommand.device,
                     response: null,
                   });
-                  if (done()) {
-                    callback(responses);
-                  }
                 })
                 .catch((error) => {
                   responses.lirc.push({
@@ -729,6 +731,8 @@ export class Television {
                     response: error,
                   });
                   this.platform.log.error(error);
+                })
+                .finally(() => {
                   if (done()) {
                     callback(responses);
                   }
