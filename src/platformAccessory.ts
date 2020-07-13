@@ -655,11 +655,6 @@ export class Television {
       return commandCounter === 0;
     };
 
-    if (!commands || commands.length === 0) {
-      this.platform.log.error('No commands were sent.');
-      callback(responses);
-    }
-
     commands?.forEach(command => {
       if (command.serial) {
         command.serial.forEach(serialCommand => {
@@ -676,73 +671,78 @@ export class Television {
         });
       }
     });
-    this.platform.log.debug(`About to send ${commandCounter} commands`);
 
-    commands?.forEach(command => {
-      // If there are serial commands
-      if (command.serial) {
-        this.platform.log.debug(`Serial: ${JSON.stringify(command.serial)}`);
-        command.serial.forEach(serialCommand => {
-          // Make sure the protocol indicated is configured
-          const protocol = this.protocols.serial[serialCommand.device];
-          if (protocol) {
-            serialCommand.commands.forEach(commandToSend => {
-              protocol.send(commandToSend, data => {
-                if (data instanceof Error) {
-                  this.platform.log.error(data.toString());
-                }
-                responses.serial.push({
-                  device: serialCommand.device,
-                  response: data,
-                });
-                if (done()) {
-                  callback(responses);
-                }
-              });
-            });
-          } else {
-            this.platform.log.error(`Incorrectly configured serial command in configuration: ${JSON.stringify(command.serial)}`);
-            // We still need to loop through the commands to get the counter in the right spot
-            serialCommand.commands.forEach(() => {
-              if (done()) {
-                callback(responses);
-              }
-            });
-          }
-        });
-      }
-      if (command.lirc) {
-        this.platform.log.debug(`LIRC: ${JSON.stringify(command.lirc)}`);
-        command.lirc.forEach(lircCommand => {
-          if (lircCommand.device) {
+    if (commandCounter === 0) {
+      this.platform.log.error('No commands were sent.');
+      callback(responses);
+    } else {
+      this.platform.log.debug(`About to send ${commandCounter} commands`);
+      commands?.forEach(command => {
+        // If there are serial commands
+        if (command.serial) {
+          this.platform.log.debug(`Serial: ${JSON.stringify(command.serial)}`);
+          command.serial.forEach(serialCommand => {
             // Make sure the protocol indicated is configured
-            const protocol = this.protocols.lirc[lircCommand.device];
+            const protocol = this.protocols.serial[serialCommand.device];
             if (protocol) {
-              protocol.sendCommands(lircCommand.commands)
-                .then(() => {
-                  responses.lirc.push({
-                    device: lircCommand.device,
-                    response: null,
+              serialCommand.commands.forEach(commandToSend => {
+                protocol.send(commandToSend, data => {
+                  if (data instanceof Error) {
+                    this.platform.log.error(data.toString());
+                  }
+                  responses.serial.push({
+                    device: serialCommand.device,
+                    response: data,
                   });
-                })
-                .catch((error) => {
-                  responses.lirc.push({
-                    device: lircCommand.device,
-                    response: error,
-                  });
-                  this.platform.log.error(error);
-                })
-                .finally(() => {
                   if (done()) {
                     callback(responses);
                   }
                 });
+              });
             } else {
-              this.platform.log.error(`Incorrectly configured LIRC command in configuration: ${JSON.stringify(command.lirc)}`);
+              this.platform.log.error(`Incorrectly configured serial command in configuration: ${JSON.stringify(command.serial)}`);
+              // We still need to loop through the commands to get the counter in the right spot
+              serialCommand.commands.forEach(() => {
+                if (done()) {
+                  callback(responses);
+                }
+              });
             }
-          }
-        });
-      }
-    });
+          });
+        }
+        if (command.lirc) {
+          this.platform.log.debug(`LIRC: ${JSON.stringify(command.lirc)}`);
+          command.lirc.forEach(lircCommand => {
+            if (lircCommand.device) {
+              // Make sure the protocol indicated is configured
+              const protocol = this.protocols.lirc[lircCommand.device];
+              if (protocol) {
+                protocol.sendCommands(lircCommand.commands)
+                  .then(() => {
+                    responses.lirc.push({
+                      device: lircCommand.device,
+                      response: null,
+                    });
+                  })
+                  .catch((error) => {
+                    responses.lirc.push({
+                      device: lircCommand.device,
+                      response: error,
+                    });
+                    this.platform.log.error(error);
+                  })
+                  .finally(() => {
+                    if (done()) {
+                      callback(responses);
+                    }
+                  });
+              } else {
+                this.platform.log.error(`Incorrectly configured LIRC command in configuration: ${JSON.stringify(command.lirc)}`);
+              }
+            }
+          });
+        }
+      });
+    }
   }
 }
