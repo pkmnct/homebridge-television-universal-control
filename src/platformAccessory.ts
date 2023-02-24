@@ -151,7 +151,7 @@ export class Television {
     power: boolean;
     mute: boolean;
     input: number;
-  }
+  };
 
   private configuredKeyStrings: string[];
   private configuredKeys: number[];
@@ -340,7 +340,7 @@ export class Television {
     this.platform.log.debug('setRemoteKey called');
 
     // If the requested key has been configured
-    if (this.device.remoteKeys && value in this.configuredKeys) {
+    if (this.device.remoteKeys && (value as number) in this.configuredKeys) {
       // Send the commands for the 
       this.sendCommands(this.device.remoteKeys[
         this.configuredKeyStrings[this.configuredKeys.indexOf(value as number)]
@@ -555,9 +555,11 @@ export class Television {
       let counter = this.devicesToQueryForMute.length;
 
       const done = (): void => {
+        this.platform.log.debug(`Mute done() called. Current counter: ${counter}`);
         counter--;
         if (counter === 0) {
           this.states.mute = muted;
+          this.platform.log.debug(`getMute callback called: ${muted}`);
           callback(null, muted);
         }
       };
@@ -641,7 +643,7 @@ export class Television {
 
     // For now, just tell homebridge it was successful. Might make this a user-configurable option
     callback(null);
-  }
+  };
 
   sendCommands = (commands: Command[] | undefined, callback: (response: CommandResponse) => void): void => {
     const responses: CommandResponse = {
@@ -744,5 +746,5 @@ export class Television {
         }
       });
     }
-  }
+  };
 }

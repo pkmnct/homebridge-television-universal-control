@@ -77,7 +77,7 @@ export class TelevisionUniversalControl implements DynamicPlatformPlugin {
         const accessory = new this.api.platformAccessory(device.name, uuid);
 
         // set the accessory category
-        accessory.category = this.api.hap.Categories.TELEVISION;
+        accessory.category = device.category || this.api.hap.Categories.TELEVISION;
 
         // store a copy of the device object in the `accessory.context`
         // the `context` property can be used to store any data about the accessory you may need

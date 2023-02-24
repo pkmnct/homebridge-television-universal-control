@@ -1,7 +1,7 @@
 # Homebridge Television Universal Control
 [![Build Status](https://github.com/pkmnct/homebridge-television-universal-control/workflows/Build%20and%20Lint/badge.svg?branch=master)](https://github.com/pkmnct/homebridge-television-universal-control/actions?query=workflow%3A%22Build+and+Lint%22) [![npm version](https://badge.fury.io/js/homebridge-television-universal-control.svg)](https://www.npmjs.com/package/homebridge-television-universal-control)
 
-This Homebridge plugin enables control of one or more compatible devices using one "Television" in HomeKit.
+This Homebridge plugin enables control of one or more compatible devices using one combined "Television" (or alternative category) in HomeKit.
 
 ## Setup
 If you run into permission errors during the install, run `sudo npm i -g homebridge-television-universal-control --unsafe-perm`
