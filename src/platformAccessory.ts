@@ -340,7 +340,7 @@ export class Television {
     this.platform.log.debug('setRemoteKey called');
 
     // If the requested key has been configured
-    if (this.device.remoteKeys && value in this.configuredKeys) {
+    if (this.device.remoteKeys && (value as number) in this.configuredKeys) {
       // Send the commands for the 
       this.sendCommands(this.device.remoteKeys[
         this.configuredKeyStrings[this.configuredKeys.indexOf(value as number)]
