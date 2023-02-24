@@ -1,4 +1,4 @@
-import SerialPort from 'serialport';
+import { SerialPort, ReadlineParser } from 'serialport';
 import { Logger } from 'homebridge/lib/logger';
 
 export interface SerialProtocolOptions {
@@ -20,7 +20,7 @@ export interface SerialProtocolCommand {
 
 export class SerialProtocol {
   private readonly port: SerialPort;
-  private readonly parser: SerialPort.parsers.Readline;
+  private readonly parser: ReadlineParser;
 
   private readonly queue:  SerialProtocolCommand[] = [];
   private busy = false;
@@ -43,7 +43,11 @@ export class SerialProtocol {
     }, 5000);
 
     // Initialize Serial Port
-    this.port = new SerialPort(this.path, this.options, (error) => {
+    this.port = new SerialPort({
+      ...this.options,
+      baudRate: this.options?.baudRate || 9600,
+      path: this.path,
+    }, (error) => {
       clearTimeout(timeout);
       if (error) {
         this.logger.error(error.message);
@@ -53,7 +57,7 @@ export class SerialProtocol {
     });
 
     // Initialize Parser
-    this.parser = this.port.pipe(new SerialPort.parsers.Readline({
+    this.parser = this.port.pipe(new ReadlineParser({
       delimiter: this.delimiter,
     }));
 
