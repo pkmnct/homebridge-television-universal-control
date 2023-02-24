@@ -564,24 +564,19 @@ export class Television {
 
       this.devicesToQueryForMute.forEach(serialDevice => {
         this.protocols.serial[serialDevice.name].send(serialDevice.getStatus!.mute!.command, data => {
-          try {
-            if (data instanceof Error) {
-              this.platform.log.error(data.toString());
-              done();
-            } else if (
-              data.includes(serialDevice.getStatus!.mute!.onResponse) ||
+          if (data instanceof Error) {
+            this.platform.log.error(data.toString());
+            done();
+          } else if (
+            data.includes(serialDevice.getStatus!.mute!.onResponse) ||
             data.includes(serialDevice.getStatus!.mute!.offResponse)
-            ) {
-              this.platform.log.debug(`${serialDevice.getStatus!.mute!.command.trim()} received success: (${data})`);
-              muted = data.includes(serialDevice.getStatus!.mute!.onResponse) ? true : false;
-              done();
-            } else {
-              const errorMessage = `While attempting to get mute state, the serial command returned '${data}'`;
-              this.platform.log.error(errorMessage);
-              done();
-            }
-          } catch (err) {
-            this.platform.log.error((err as Error).message);
+          ) {
+            this.platform.log.debug(`${serialDevice.getStatus!.mute!.command.trim()} received success: (${data})`);
+            muted = data.includes(serialDevice.getStatus!.mute!.onResponse) ? true : false;
+            done();
+          } else {
+            const errorMessage = `While attempting to get mute state, the serial command returned '${data}'`;
+            this.platform.log.error(errorMessage);
             done();
           }
         });
