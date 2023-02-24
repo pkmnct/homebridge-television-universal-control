@@ -151,7 +151,7 @@ export class Television {
     power: boolean;
     mute: boolean;
     input: number;
-  }
+  };
 
   private configuredKeyStrings: string[];
   private configuredKeys: number[];
@@ -641,7 +641,7 @@ export class Television {
 
     // For now, just tell homebridge it was successful. Might make this a user-configurable option
     callback(null);
-  }
+  };
 
   sendCommands = (commands: Command[] | undefined, callback: (response: CommandResponse) => void): void => {
     const responses: CommandResponse = {
@@ -744,5 +744,5 @@ export class Television {
         }
       });
     }
-  }
+  };
 }
