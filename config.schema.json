@@ -16,6 +16,22 @@
               "type": "string",
               "required": true
             },
+            "category": {
+              "title": "Category",
+              "description": "Known category values. Category is a hint to Homekit clients about what \"type\" of Accessory this represents, for UI only. See https://github.com/homebridge/HAP-NodeJS/blob/master/src/lib/Accessory.ts",
+              "type": "integer",
+              "placeholder": 31,
+              "oneOf": [
+                { "title": "Other", "enum": [1] },
+                { "title": "Bridge", "enum": [2] },
+                { "title": "Speaker", "enum": [26] },
+                { "title": "Television", "enum": [31] },
+                { "title": "Remote Control", "enum": [32] },
+                { "title": "Audio Receiver", "enum": [34] },
+                { "title": "TV Set Top Box", "enum": [35] },
+                { "title": "TV Streaming Stick", "enum": [36] }
+              ]
+            },
             "devices": {
               "type": "object",
               "title": "Devices",
@@ -59,7 +75,7 @@
                           "dataBits": {
                             "title": "Data Bits",
                             "type": "integer",
-                            "placeholder": "8",
+                            "placeholder": 8,
                             "oneOf": [
                               { "title": "8", "enum": [8] },
                               { "title": "7", "enum": [7] },
@@ -70,7 +86,7 @@
                           "stopBits": {
                             "title": "Stop Bits",
                             "type": "integer",
-                            "placeholder": "1",
+                            "placeholder": 1,
                             "oneOf": [
                               { "title": "1", "enum": [1] },
                               { "title": "2", "enum": [2] }
