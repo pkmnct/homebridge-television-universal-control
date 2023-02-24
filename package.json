@@ -15,6 +15,7 @@
     "node": ">=10.17.0",
     "homebridge": ">0.4.53"
   },
+  "main": "dist/index.js",
   "scripts": {
     "lint": "eslint --fix src/**.ts",
     "watch": "npm run build && npm link && nodemon",
