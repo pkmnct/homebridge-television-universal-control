@@ -555,6 +555,7 @@ export class Television {
       let counter = this.devicesToQueryForMute.length;
 
       const done = (): void => {
+        this.platform.log.debug(`Mute done() called. Current counter: ${counter}`);
         counter--;
         if (counter === 0) {
           this.states.mute = muted;
