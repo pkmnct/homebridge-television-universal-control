@@ -559,6 +559,7 @@ export class Television {
         counter--;
         if (counter === 0) {
           this.states.mute = muted;
+          this.platform.log.debug(`getMute callback called: ${muted}`);
           callback(null, muted);
         }
       };
