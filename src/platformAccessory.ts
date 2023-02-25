@@ -136,7 +136,7 @@ interface UniversalControlDevice {
  */
 export class Television {
   private tvService: Service;
-  private tvSpeakerService: Service;
+  private tvSpeakerService: Service | undefined;
 
   private protocols: {
     serial: {
@@ -174,6 +174,19 @@ export class Television {
     };
 
     this.device = accessory.context.device;
+      
+    // Figure out which devices to query for power (those that have getStatus.power.command configured)
+    this.devicesToQueryForPower = this.device.devices?.serial?.filter(
+      (serialDevice: SerialProtocolDevice) => serialDevice.getStatus?.power?.command,
+    );
+    // Figure out which devices to query for inputs (those that have getStatus.input.command configured)
+    this.devicesToQueryForInput = this.device.devices?.serial?.filter(
+      (serialDevice: SerialProtocolDevice) => serialDevice.getStatus?.input?.command,
+    );
+    // Figure out which devices to query for mute (those that have getStatus.mute.command configured)
+    this.devicesToQueryForMute = this.device.devices?.serial?.filter(
+      (serialDevice: SerialProtocolDevice) => serialDevice.getStatus?.mute?.command,
+    );
 
     // set accessory information
     this.accessory
@@ -224,28 +237,6 @@ export class Television {
       .on(CharacteristicEventTypes.SET, this.setActiveIdentifier.bind(this)) // SET - bind to the 'setActiveIdentifier` method below
       .on(CharacteristicEventTypes.GET, this.getActiveIdentifier.bind(this)); // GET - bind to the `getActiveIdentifier` method below
 
-    // get the Television Speaker service if it exists, otherwise create a new Television Speaker service
-    this.tvSpeakerService =
-      this.accessory.getService(this.platform.Service.TelevisionSpeaker) ??
-      this.accessory.addService(this.platform.Service.TelevisionSpeaker);
-
-    // set the volume control type
-    this.tvSpeakerService
-      .setCharacteristic(this.platform.Characteristic.Active, this.platform.Characteristic.Active.ACTIVE)
-      .setCharacteristic(this.platform.Characteristic.VolumeControlType, this.platform.Characteristic.VolumeControlType.RELATIVE);
-
-    this.tvSpeakerService
-      .getCharacteristic(this.platform.Characteristic.Mute)
-      .on(CharacteristicEventTypes.SET, this.setMute.bind(this))
-      .on(CharacteristicEventTypes.GET, this.getMute.bind(this));
-
-    this.tvSpeakerService
-      .getCharacteristic(this.platform.Characteristic.VolumeSelector)
-      .on(CharacteristicEventTypes.SET, this.setVolume.bind(this));
-
-    // Link the service
-    this.tvService.addLinkedService(this.tvSpeakerService);
-
     this.tvService
       .getCharacteristic(this.platform.Characteristic.RemoteKey)
       .on(CharacteristicEventTypes.SET, this.setRemoteKey.bind(this));
@@ -257,22 +248,34 @@ export class Television {
       // TODO: there is probably a cleaner way to get this via typescript...
       this.configuredKeys.push((this.platform.Characteristic.RemoteKey as unknown as { [key: string]: number })[string]);
     });
+      
+    // Mute is a required characteristic for TelevisionSpeaker, if we don't have any mutable devices don't register the service.
+    if (this.devicesToQueryForMute?.length) {
+      // get the Television Speaker service if it exists, otherwise create a new Television Speaker service
+      this.tvSpeakerService =
+        this.accessory.getService(this.platform.Service.TelevisionSpeaker) ??
+        this.accessory.addService(this.platform.Service.TelevisionSpeaker);
 
-    // Figure out which devices to query for power (those that have getStatus.power.command configured)
-    this.devicesToQueryForPower = this.device.devices?.serial?.filter(
-      (serialDevice: SerialProtocolDevice) => serialDevice.getStatus?.power?.command,
-    );
-    // Figure out which devices to query for inputs (those that have getStatus.input.command configured)
-    this.devicesToQueryForInput = this.device.devices?.serial?.filter(
-      (serialDevice: SerialProtocolDevice) => serialDevice.getStatus?.input?.command,
-    );
-    // Figure out which devices to query for mute (those that have getStatus.mute.command configured)
-    this.devicesToQueryForMute = this.device.devices?.serial?.filter(
-      (serialDevice: SerialProtocolDevice) => serialDevice.getStatus?.mute?.command,
-    );
+      // set the volume control type
+      this.tvSpeakerService
+        .setCharacteristic(this.platform.Characteristic.Active, this.platform.Characteristic.Active.ACTIVE)
+        .setCharacteristic(this.platform.Characteristic.VolumeControlType, this.platform.Characteristic.VolumeControlType.RELATIVE);
+
+      this.tvSpeakerService
+        .getCharacteristic(this.platform.Characteristic.Mute)
+        .on(CharacteristicEventTypes.SET, this.setMute.bind(this))
+        .on(CharacteristicEventTypes.GET, this.getMute.bind(this));
+
+      this.tvSpeakerService
+        .getCharacteristic(this.platform.Characteristic.VolumeSelector)
+        .on(CharacteristicEventTypes.SET, this.setVolume.bind(this));
+
+      // Link the service
+      this.tvService.addLinkedService(this.tvSpeakerService);
+    }
 
     // register inputs
-    this.device.inputs.forEach(
+    (this.device.inputs || []).forEach(
       (
         input: {
           name: string;
@@ -388,7 +391,7 @@ export class Television {
   getActive(callback: CharacteristicGetCallback): void {
     this.platform.log.debug('getActive called');
 
-    if (this.devicesToQueryForPower) {
+    if (this.devicesToQueryForPower?.length) {
       // If any individual device (that has getStatus power configured) is off, this will be overridden and the universal TV will show off.
       let isOn = true;
       let counter = this.devicesToQueryForPower.length;
@@ -549,7 +552,7 @@ export class Television {
   ): void {
     this.platform.log.debug('getMute called');
 
-    if (this.devicesToQueryForMute) {
+    if (this.devicesToQueryForMute?.length) {
       // If any individual device is muted, this will be overridden and the universal TV will show muted.
       let muted = false;
       let counter = this.devicesToQueryForMute.length;
